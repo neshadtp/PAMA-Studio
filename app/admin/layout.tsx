@@ -16,6 +16,7 @@ import {
   Search
 } from 'lucide-react';
 import { useState } from 'react';
+import Image from "next/image";
 
 const menuItems = [
   { name: 'Dashboard', icon: LayoutDashboard, path: '/admin' },
@@ -37,10 +38,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* SIDEBAR MERAH */}
       <aside className="w-64 bg-red-600 text-white flex flex-col shadow-lg flex-shrink-0 z-20">
         {/* Logo Area */}
-        <div className="p-6 border-b border-red-700 flex items-center gap-3">
-          <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-red-600 font-bold">P</div>
-          <span className="font-bold text-xl tracking-wide">PAMA Studio</span>
+      <div className="p-6 border-b border-red-700 flex items-center gap-3">
+        <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-xl bg-white">
+          <Image src="/logo.png" alt="Logo PAMA" fill className="object-contain p-1" />
         </div>
+        <span className="font-bold text-xl tracking-wide">PAMA Studio</span>
+      </div>
 
         {/* Menu Items */}
         <nav className="flex-1 py-6 space-y-1 px-3 overflow-y-auto">
@@ -105,10 +108,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
           {/* Right Icons */}
           <div className="flex items-center gap-4">
-            <button className="relative p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors">
-              <Bell size={20} />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-            </button>
+          <a href="/admin/notifications" className="relative p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors">
+            <Bell size={20} />
+            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+          </a>
             <div className="flex items-center gap-2">
                <img 
                 src="https://ui-avatars.com/api/?name=Super+Admin&background=random" 
