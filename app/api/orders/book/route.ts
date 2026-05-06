@@ -116,24 +116,26 @@ export async function POST(request: Request) {
 
       // 8. Insert Booking — slot_id null karena sudah nullable
       if (duration > 0 && resourceId) {
-        const startAt = new Date(`${date}T${time}:00+07:00`);
+        const timeStart = time.split("-")[0].replace(".", ":");
+        const startAt = new Date(`${date}T${timeStart}:00+07:00`);
         if (isNaN(startAt.getTime())) throw new Error("Format tanggal/waktu tidak valid");
 
         const endAt = addMinutes(startAt, duration);
         const timeRange = `[${startAt.toISOString()},${endAt.toISOString()})`;
 
+        await supabase
+          .from("orders")
+          .update({ scheduled_at: startAt.toISOString() })
+          .eq("id", order.id);
+
         const { error: bookErr } = await supabase.from("bookings").insert({
           order_id: order.id,
-          resource_id: resourceId,
-          start_at: startAt.toISOString(),
-          end_at: endAt.toISOString(),
           time_range: timeRange,
-          // slot_id tidak dikirim — sudah nullable
+          // slot_id nullable, tidak dikirim
         });
 
         if (bookErr) throw new Error("Slot sudah terisi atau error sistem: " + bookErr.message);
       }
-
       return NextResponse.json({ ok: true, orderId: order.id });
 
     } catch (innerError: any) {

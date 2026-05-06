@@ -12,6 +12,7 @@ import {
   X, 
   Sparkles 
 } from "lucide-react";
+import Image from "next/image";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -40,14 +41,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       `}>
         <div className="h-full flex flex-col p-6">
           {/* Logo */}
-          <div className="flex items-center gap-3 px-2 mb-10">
-            <div className="bg-[#8B1A1A] p-2 rounded-xl">
-              <Sparkles className="text-white h-5 w-5" />
-            </div>
-            <span className="font-serif text-xl text-[#1a0505] font-bold" style={{ fontFamily: "var(--font-fraunces)" }}>
-              PAMA <span className="italic text-[#8B1A1A]">Studio</span>
-            </span>
+        <div className="flex items-center gap-3 px-2 mb-10">
+          <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-xl">
+            <Image src="/logo.png" alt="Logo PAMA" fill className="object-contain" />
           </div>
+          <span className="font-serif text-xl text-[#1a0505] font-bold" style={{ fontFamily: "var(--font-fraunces)" }}>
+            PAMA <span className="italic text-[#8B1A1A]">Studio</span>
+          </span>
+        </div>
 
           {/* Navigation */}
           <nav className="flex-1 space-y-2">

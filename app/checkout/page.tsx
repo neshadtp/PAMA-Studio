@@ -71,7 +71,8 @@ export default function CheckoutPage() {
     return `${yyyy}-${mm}-${dd}`;
   });
 
-  const [availableTimes, setAvailableTimes] = useState<string[]>([]);
+  type Slot = { time: string; available: boolean };
+  const [slots, setSlots] = useState<Slot[]>([]);
   const [time, setTime] = useState<string>("");
   const [fineStep, setFineStep] = useState(false);
   const [selectedAddons, setSelectedAddons] = useState<Record<string, number>>({});
@@ -136,12 +137,12 @@ export default function CheckoutPage() {
 
     setErr("");
     setLoadingTimes(true);
-    setAvailableTimes([]);
+    setSlots([]);
     setTime("");
 
     try {
       if ((pkg.duration_minutes ?? 0) <= 0) {
-        setAvailableTimes([]);
+        setSlots([]);
         return;
       }
 
@@ -155,7 +156,7 @@ export default function CheckoutPage() {
         setErr(data?.message ?? "Gagal load jam tersedia");
         return;
       }
-      setAvailableTimes(data.available ?? []);
+      setSlots(data.slots ?? []);
     } catch {
       setErr("Gagal load jam tersedia");
     } finally {
@@ -277,7 +278,7 @@ export default function CheckoutPage() {
 
   return (
     <main className="relative min-h-screen bg-[#FBF7F1] text-[#1a0505] pb-20">
-      <CheckoutAuthModal isOpen={authOpen} onClose={() => setAuthOpen(false)} title="Login untuk lanjut booking" subtitle="Masuk dulu biar kamu bisa pilih jadwal dan pesananmu tersimpan." />
+      <CheckoutAuthModal isOpen={authOpen} onClose={() => setAuthOpen(false)} />
       <SuccessModal isOpen={isModalOpen} data={orderResult} onClose={() => { setIsModalOpen(false); router.push("/dashboard-client"); }} />
 
       {/* Ornaments */}
@@ -352,10 +353,24 @@ export default function CheckoutPage() {
 
                     {loadingTimes ? <div className="text-sm opacity-50">Memuat...</div> : (
                       <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-                        {availableTimes.map((t) => (
-                          <button key={t} type="button" onClick={() => setTime(t)} className={`rounded-full border px-3 py-2 text-sm font-semibold transition ${time === t ? "bg-[#8B1A1A] text-white" : "bg-white/60 text-[#8B1A1A] hover:bg-white"}`}>{t}</button>
-                        ))}
-                      </div>
+                          {slots.map((slot) => (
+                            <button
+                              key={slot.time}
+                              type="button"
+                              disabled={!slot.available}
+                              onClick={() => slot.available && setTime(slot.time)}
+                              className={`rounded-full px-3 py-2 text-sm font-semibold transition
+                                ${!slot.available
+                                  ? "bg-[#d1d5db] text-[#9ca3af] cursor-not-allowed"
+                                  : time === slot.time
+                                    ? "bg-[#8B1A1A] text-white"
+                                    : "bg-[#FFC107] text-[#1a0505] hover:bg-[#FFB300]"
+                                }`}
+                            >
+                              {slot.time}
+                            </button>
+                          ))}
+                        </div>
                     )}
                   </div>
                 </div>
