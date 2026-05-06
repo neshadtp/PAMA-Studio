@@ -1,17 +1,19 @@
 import type { Metadata } from "next";
 import { Inter_Tight, Fraunces } from "next/font/google";
-import "./globals.css"; // Pastikan path ini sesuai dengan file CSS Tailwind kamu
+import "./globals.css";
+import ChatbotWidget from '@/components/ChatbotWidget';
 
-// Konfigurasi Google Fonts
 const interTight = Inter_Tight({ 
   subsets: ["latin"],
   display: "swap",
+  variable: '--font-inter-tight',
 });
 
 const fraunces = Fraunces({ 
   subsets: ["latin"],
   style: ["normal", "italic"],
   display: "swap",
+  variable: '--font-fraunces',
 });
 
 export const metadata: Metadata = {
@@ -19,17 +21,18 @@ export const metadata: Metadata = {
   description: "Abadikan versi terbaikmu dengan mudah di PAMA Studio.",
 };
 
-// WAJIB: Export default function yang menerima { children }
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" className="scroll-smooth">
-      {/* Memasukkan class font ke dalam body */}
+    <html lang="id" className={`scroll-smooth ${interTight.variable} ${fraunces.variable}`}>
       <body className={`${interTight.className} antialiased`}>
         {children}
+        
+        {/* ChatbotWidget muncul di semua page */}
+        <ChatbotWidget />
       </body>
     </html>
   );
