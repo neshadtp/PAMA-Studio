@@ -1,46 +1,20 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import {
-  CalendarDays,
-  Clock4,
-  Loader2,
-  ArrowRight,
-  ShieldCheck,
-  Sparkles,
-} from "lucide-react";
-
-import { createSupabaseBrowserClient } from "@/lib/supabase/browse";
-import CheckoutAuthModal from "@/components/ui/AuthModal";
-import SuccessModal from "@/components/ui/SuccessModal";
-
-// --- Types ---
-type PackageRow = {
-  id: string;
-  type: "self_photo" | "pas_foto" | "photographer";
-  title: string;
-  description: string | null;
-  includes: string | null;
-  duration_minutes: number | null;
-  min_people: number | null;
-  max_people: number | null;
-  base_price_idr: number;
-};
-
-type AddonRow = {
-  id: string;
-  title: string;
-  description: string | null;
-  price_idr: number;
-  is_active: boolean;
-};
-
-function formatIDR(n: number) {
-  return "Rp " + new Intl.NumberFormat("id-ID").format(n);
-}
+import React, { Suspense } from "react";
+import { Loader2 } from "lucide-react";
+import CheckoutContent from "./CheckoutContent";
 
 export default function CheckoutPage() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-screen bg-[#FBF7F1] text-[#1a0505] flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-[#8B1A1A]" />
+      </main>
+    }>
+      <CheckoutContent />
+    </Suspense>
+  );
+}
   const router = useRouter();
   const searchParams = useSearchParams();
   const packageId = searchParams.get("packageId");

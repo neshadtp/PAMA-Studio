@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 
 type Mode = "login" | "register";
 
-export default function AuthModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+export default function AuthModal({ isOpen, onClose, title, subtitle }: { isOpen: boolean; onClose: () => void; title?: string; subtitle?: string }) {
   const router = useRouter();
   const supabase = useMemo(() => createSupabaseBrowserClient(), []);
 
@@ -138,9 +138,11 @@ export default function AuthModal({ isOpen, onClose }: { isOpen: boolean; onClos
             <X className="h-5 w-5" />
           </button>
 
-          <h2 className="text-2xl font-bold mb-6 text-[#1a0505]">
+          {title && <h2 className="text-2xl font-bold mb-2 text-[#1a0505]">{title}</h2>}
+          {subtitle && <p className="text-sm text-gray-600 mb-6">{subtitle}</p>}
+          {!title && <h2 className="text-2xl font-bold mb-6 text-[#1a0505]">
             {mode === "login" ? "Masuk" : "Daftar Akun"}
-          </h2>
+          </h2>}
 
           <div className="mb-6 flex rounded-xl bg-gray-100 p-1">
             {(["login", "register"] as Mode[]).map((m) => (
