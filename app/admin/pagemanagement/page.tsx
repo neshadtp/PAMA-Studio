@@ -43,10 +43,10 @@ const PAGES: Page[] = [
     path: "/#kontak",
   },
   {
-    id: "faq",
-    title: "FAQ",
-    description: "Halaman berisi pertanyaan umum dan informasi penting seputar booking studio.",
-    path: "/faq",
+    id: "footer",
+    title: "Footer",
+    description: "Halaman footer yang menampilkan informasi kontak dan tautan penting.",
+    path: "/#footer",
   },
   {
     id: "checkout",

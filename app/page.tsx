@@ -20,7 +20,7 @@ export default function HomePage() {
       <BestSeller />
       <Testimonials />
       <Contact />
-
+      
       <Footer />
     </main>
   );

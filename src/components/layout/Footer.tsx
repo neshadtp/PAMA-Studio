@@ -6,7 +6,7 @@ import { MapPin, Phone, Mail } from "lucide-react";
 
 const Footer: React.FC = () => {
   return (
-    <footer className="relative overflow-hidden text-white">
+    <footer id="footer" className="relative overflow-hidden text-white">
       {/* Curved wave SVG top */}
       <div className="relative -mb-1">
         <svg
