@@ -6,7 +6,6 @@ import {
   ArrowUpRight, Loader2, AlertCircle, ChevronLeft, ChevronRight,
   ArrowRight,
 } from "lucide-react";
-import AIInsightWidget from "../../src/components/admin/AIInsightWidget";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
@@ -211,7 +210,6 @@ export default function AdminPage() {
         />
       </div>
 
-      <AIInsightWidget />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 bg-white rounded-3xl border border-[#8B1A1A]/10 shadow-sm overflow-hidden">
