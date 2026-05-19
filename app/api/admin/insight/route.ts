@@ -3,10 +3,6 @@ import Groq from "groq-sdk";
 import { getAnalyticsData, AnalyticsRange } from "@/lib/analytics-queries";
 import { verifyAdmin } from "@/lib/auth-helpers";
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_INSIGHT_KEY,
-});
-
 export async function POST(req: NextRequest) {
   const check = await verifyAdmin();
   if (!check.success) {
@@ -14,6 +10,13 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    // Instantiate Groq client at request time to avoid build-time failures
+    const groqApiKey = process.env.GROQ_API_INSIGHT_KEY || process.env.GROQ_API_KEY;
+    let groq: any = null;
+    if (groqApiKey) {
+      groq = new Groq({ apiKey: groqApiKey });
+    }
+
     const { range } = (await req.json()) as { range: AnalyticsRange };
 
     if (!range) {
@@ -49,25 +52,36 @@ export async function POST(req: NextRequest) {
       - Pastikan rekomendasi bersifat praktis dan dapat segera diterapkan oleh PAMA Studio.
     `;
 
-    // 3. Generate Insight with Groq (Llama 3)
-    const chatCompletion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: "system",
-          content: "You are a helpful business assistant that provides clear and actionable insights in Indonesian. You only output valid JSON.",
-        },
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-      model: "llama-3.1-8b-instant",
-      response_format: { type: "json_object" },
-      temperature: 0.5,
-      max_tokens: 2048,
-    });
+    // 3. Generate Insight with Groq (Llama 3) if API key is configured
+    let insightString = "{}";
+    if (groq) {
+      const chatCompletion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: "system",
+            content: "You are a helpful business assistant that provides clear and actionable insights in Indonesian. You only output valid JSON.",
+          },
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        model: "llama-3.1-8b-instant",
+        response_format: { type: "json_object" },
+        temperature: 0.5,
+        max_tokens: 2048,
+      });
 
-    const insightString = chatCompletion.choices[0]?.message?.content || "{}";
+      insightString = chatCompletion.choices[0]?.message?.content || "{}";
+    } else {
+      // If no API key configured, return a placeholder insight and avoid throwing during build
+      insightString = JSON.stringify({
+        executive_summary: "AI insight unavailable (no GROQ API key configured)",
+        performance_analysis: "AI insights are disabled. Configure GROQ_API_INSIGHT_KEY to enable.",
+        package_insights: "-",
+        recommendations: ["Configure GROQ_API_INSIGHT_KEY in environment variables"]
+      });
+    }
     let insight;
     try {
       insight = JSON.parse(insightString);
