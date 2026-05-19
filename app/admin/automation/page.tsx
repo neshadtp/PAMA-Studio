@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/supabase-browser";
-import { Loader2, Sparkles, Bell, RefreshCw } from "lucide-react";
+import { Loader2, Sparkles, Bell, RefreshCw, TrendingUp, Zap, PieChart, ChevronRight, DollarSign, ShoppingBag, CheckCircle, Clock } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 type AutoLog = {
   time: string;
@@ -11,14 +12,80 @@ type AutoLog = {
   status: "Gagal" | "Berhasil";
 };
 
+type Range = "daily" | "weekly" | "monthly";
+
+interface AIInsight {
+  executive_summary: string;
+  performance_analysis: string;
+  package_insights: string;
+  recommendations: string[];
+}
+
+interface StatsData {
+  totalOrders: number;
+  totalRevenue: number;
+  completedOrders: number;
+  pendingOrders: number;
+  popularPackages: { title: string; count: number }[];
+  dateRange: { start: string; end: string };
+}
+
 export default function AutomationPage() {
   const supabase = createSupabaseBrowserClient();
   const [loading, setLoading] = useState(true);
-  const [aiLoading, setAiLoading] = useState(false);
   const [summary, setSummary] = useState("");
-  const [aiAnalysis, setAiAnalysis] = useState("");
   const [logs, setLogs] = useState<AutoLog[]>([]);
   const [stats, setStats] = useState({ total: 0, success: 0, failed: 0 });
+
+  // AI Insight states
+  const [range, setRange] = useState<Range>("daily");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiResult, setAiResult] = useState<{ stats: StatsData; insight: AIInsight } | null>(null);
+  const [usage, setUsage] = useState<Record<Range, number>>({ daily: 0, weekly: 0, monthly: 0 });
+
+  useEffect(() => {
+    const stored = localStorage.getItem("pama_ai_usage");
+    const today = new Date().toDateString();
+    const lastDate = localStorage.getItem("pama_ai_usage_date");
+
+    if (lastDate !== today) {
+      localStorage.setItem("pama_ai_usage_date", today);
+      localStorage.setItem("pama_ai_usage", JSON.stringify({ daily: 0, weekly: 0, monthly: 0 }));
+    } else if (stored) {
+      setUsage(JSON.parse(stored));
+    }
+  }, []);
+
+  const generateInsight = async () => {
+    if (usage[range] >= 3) {
+      alert(`Batas harian tercapai! Anda hanya dapat generate insight ${range} maksimal 3 kali sehari.`);
+      return;
+    }
+
+    setAiLoading(true);
+    try {
+      const response = await fetch("/api/admin/insight", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ range }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        setAiResult({ stats: data.data, insight: data.insight });
+        
+        const newUsage = { ...usage, [range]: usage[range] + 1 };
+        setUsage(newUsage);
+        localStorage.setItem("pama_ai_usage", JSON.stringify(newUsage));
+      } else {
+        alert(data.error || "Gagal mengambil insight");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Terjadi kesalahan sistem");
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -94,51 +161,6 @@ export default function AutomationPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const generateAI = async () => {
-    setAiLoading(true);
-    setAiAnalysis("");
-
-    try {
-      const { data: allOrders } = await supabase
-        .from("orders")
-        .select("id, status, created_at, total_price_idr, packages(title)")
-        .order("created_at", { ascending: false })
-        .limit(50);
-
-      const prompt = `Kamu adalah analis sistem untuk PAMA Studio, sebuah studio foto di Indonesia.
-Berikut adalah data pesanan terbaru (${allOrders?.length ?? 0} pesanan):
-
-    ${allOrders?.map((o: any) =>
-    `- ${o.packages?.title ?? "?"} | Status: ${String(o.status)} | Tanggal: ${new Date(o.created_at).toLocaleDateString("id-ID")}`
-    ).join("\n")}
-
-Berikan analisis singkat (3-4 kalimat) tentang:
-1. Pola booking yang terlihat
-2. Status yang paling sering muncul
-3. Rekomendasi untuk meningkatkan konversi
-
-Gunakan bahasa Indonesia yang profesional dan ringkas.`;
-
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
-          messages: [{ role: "user", content: prompt }],
-        }),
-      });
-
-      const data = await res.json();
-      const text = data.content?.map((c: any) => c.text ?? "").join("") ?? "Gagal generate analisis.";
-      setAiAnalysis(text);
-    } catch {
-      setAiAnalysis("Gagal menghubungi AI. Coba lagi.");
-    }
-
-    setAiLoading(false);
-  };
-
   if (loading) return (
     <div className="flex items-center justify-center h-64">
       <Loader2 className="animate-spin text-red-600" size={32} />
@@ -149,7 +171,266 @@ Gunakan bahasa Indonesia yang profesional dan ringkas.`;
 
   return (
     <div className="space-y-6">
-      {/* Top Cards */}
+      {/* AI Insight Section - New Integration */}
+      <div className="w-full space-y-6">
+        {/* Header & Controls */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-[#8B1A1A] p-8 rounded-[2rem] text-white shadow-2xl">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+              <span className="text-xs font-bold text-white/70 uppercase tracking-widest">Powered by Llama 3.1</span>
+            </div>
+            <h2 className="text-3xl font-black">
+              Business <span className="text-white/80">Intelligence</span>
+            </h2>
+            <p className="text-white/60 text-sm mt-1 max-w-md">
+              Analisis data studio Anda secara instan untuk mendapatkan strategi pertumbuhan yang tepat.
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <div className="flex items-center gap-1 bg-white/10 p-1.5 rounded-2xl border border-white/20">
+              {(["daily", "weekly", "monthly"] as Range[]).map((r) => (
+                <button
+                  key={r}
+                  onClick={() => setRange(r)}
+                  className={`relative px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${
+                    range === r
+                      ? "bg-white text-[#8B1A1A] shadow-sm"
+                      : "text-white/70 hover:text-white"
+                  }`}
+                >
+                  {r === "daily" ? "Harian" : r === "weekly" ? "Mingguan" : "Bulanan"}
+                  {usage[r] > 0 && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-white/40 text-white text-[10px] flex items-center justify-center rounded-full">
+                      {usage[r]}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex flex-col items-center gap-2">
+              <button
+                onClick={generateInsight}
+                disabled={aiLoading || usage[range] >= 3}
+                className="w-full sm:w-auto flex items-center justify-center gap-3 px-8 py-3.5 bg-white hover:bg-white/90 text-[#8B1A1A] rounded-2xl font-bold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {aiLoading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <Sparkles className="w-5 h-5" />
+                )}
+                {aiLoading ? "Analyst is thinking..." : usage[range] >= 3 ? "Batas Tercapai" : "Generate Insights"}
+              </button>
+              <span className="text-[10px] font-bold text-white/50 uppercase tracking-tighter">
+                Sisa hari ini: {3 - usage[range]}x generate
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* AI Insight Result */}
+        <AnimatePresence mode="wait">
+          {aiResult ? (
+            <motion.div
+              key="result"
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              className="space-y-8"
+            >
+              {/* Quick Stats Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-[#8B1A1A] p-6 rounded-[2rem] text-white shadow-lg">
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="p-3 rounded-2xl bg-white/20">
+                      <DollarSign className="w-5 h-5 text-white" />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-3xl font-black tracking-tight">
+                      Rp {aiResult.stats.totalRevenue.toLocaleString("id-ID")}
+                    </div>
+                    <p className="text-[10px] font-medium text-white/60 flex items-center gap-1">
+                      <ChevronRight className="w-3 h-3" />
+                      Total Revenue
+                    </p>
+                  </div>
+                </div>
+                <div className="bg-[#8B1A1A] p-6 rounded-[2rem] text-white shadow-lg">
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="p-3 rounded-2xl bg-white/20">
+                      <ShoppingBag className="w-5 h-5 text-white" />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-3xl font-black tracking-tight">{aiResult.stats.totalOrders}</div>
+                    <p className="text-[10px] font-medium text-white/60 flex items-center gap-1">
+                      <ChevronRight className="w-3 h-3" />
+                      Total Orders
+                    </p>
+                  </div>
+                </div>
+                <div className="bg-[#8B1A1A] p-6 rounded-[2rem] text-white shadow-lg">
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="p-3 rounded-2xl bg-white/20">
+                      <CheckCircle className="w-5 h-5 text-white" />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-3xl font-black tracking-tight">{aiResult.stats.completedOrders}</div>
+                    <p className="text-[10px] font-medium text-white/60 flex items-center gap-1">
+                      <ChevronRight className="w-3 h-3" />
+                      Completed
+                    </p>
+                  </div>
+                </div>
+                <div className="bg-[#8B1A1A] p-6 rounded-[2rem] text-white shadow-lg">
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="p-3 rounded-2xl bg-white/20">
+                      <Clock className="w-5 h-5 text-white" />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-3xl font-black tracking-tight">{aiResult.stats.pendingOrders}</div>
+                    <p className="text-[10px] font-medium text-white/60 flex items-center gap-1">
+                      <ChevronRight className="w-3 h-3" />
+                      Active
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* AI Insight Content */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                {/* Main Analysis Column */}
+                <div className="lg:col-span-8 space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-white dark:bg-zinc-900 rounded-[2rem] p-6 border border-zinc-200 dark:border-zinc-800 shadow-sm">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-xl">
+                          <Zap className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Executive Summary</h3>
+                      </div>
+                      <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed font-medium">
+                        {aiResult.insight.executive_summary.split(/(\*\*.*?\*\*)/).map((part, index) => 
+                          part.startsWith("**") && part.endsWith("**") 
+                            ? <strong key={index} className="text-zinc-900 dark:text-zinc-100 font-black">{part.slice(2, -2)}</strong>
+                            : part
+                        )}
+                      </p>
+                    </div>
+                    <div className="bg-white dark:bg-zinc-900 rounded-[2rem] p-6 border border-zinc-200 dark:border-zinc-800 shadow-sm">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="p-2 bg-violet-100 dark:bg-violet-900/30 rounded-xl">
+                          <TrendingUp className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+                        </div>
+                        <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Performance</h3>
+                      </div>
+                      <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed font-medium">
+                        {aiResult.insight.performance_analysis.split(/(\*\*.*?\*\*)/).map((part, index) => 
+                          part.startsWith("**") && part.endsWith("**") 
+                            ? <strong key={index} className="text-zinc-900 dark:text-zinc-100 font-black">{part.slice(2, -2)}</strong>
+                            : part
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white dark:bg-zinc-900 rounded-[2rem] p-6 border border-zinc-200 dark:border-zinc-800 shadow-sm">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-xl">
+                        <Sparkles className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                      </div>
+                      <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">Strategic Recommendations</h3>
+                    </div>
+                    <ul className="space-y-4">
+                      {aiResult.insight.recommendations.map((item, i) => (
+                        <li key={i} className="flex items-start gap-4 text-zinc-700 dark:text-zinc-300">
+                          <div className="mt-1.5 w-5 h-5 rounded-full bg-amber-500 text-white flex items-center justify-center text-[10px] font-bold flex-shrink-0">
+                            {i + 1}
+                          </div>
+                          <span className="text-sm leading-relaxed font-medium">
+                            {item.split(/(\*\*.*?\*\*)/).map((part, index) => 
+                              part.startsWith("**") && part.endsWith("**") 
+                                ? <strong key={index} className="text-zinc-900 dark:text-zinc-100 font-black">{part.slice(2, -2)}</strong>
+                                : part
+                            )}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Sidebar: Package & Insight */}
+                <div className="lg:col-span-4 space-y-6">
+                  <div className="bg-white dark:bg-zinc-900 rounded-[2rem] p-8 border border-zinc-200 dark:border-zinc-800 shadow-sm">
+                    <div className="flex items-center gap-3 mb-8">
+                      <div className="p-2.5 bg-violet-100 dark:bg-violet-900/30 rounded-xl">
+                        <PieChart className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+                      </div>
+                      <h3 className="text-xl font-bold">Package Stats</h3>
+                    </div>
+
+                    <div className="space-y-6">
+                      {aiResult.stats.popularPackages.map((pkg, i) => (
+                        <div key={i} className="group">
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="text-sm font-bold text-zinc-700 dark:text-zinc-200">{pkg.title}</span>
+                            <span className="text-xs font-black text-zinc-400">{pkg.count} orders</span>
+                          </div>
+                          <div className="w-full bg-zinc-100 dark:bg-zinc-800 h-3 rounded-full overflow-hidden">
+                            <motion.div 
+                              initial={{ width: 0 }}
+                              animate={{ width: `${(pkg.count / Math.max(...aiResult.stats.popularPackages.map(p => p.count), 1)) * 100}%` }}
+                              transition={{ duration: 1, ease: "easeOut" }}
+                              className="h-full bg-gradient-to-r from-[#8B1A1A] to-[#8B1A1A]/70 rounded-full"
+                            />
+                          </div>
+                        </div>
+                      ))}
+                      
+                      <div className="pt-6 mt-6 border-t border-zinc-100 dark:border-zinc-800">
+                        <h4 className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-3">AI Contextual Insight</h4>
+                        <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed italic">
+                          "{aiResult.insight.package_insights}"
+                        </p>
+                      </div>
+
+                      {aiResult.stats.popularPackages.length === 0 && (
+                        <p className="text-sm text-zinc-500 italic text-center py-4">Belum ada data paket.</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div 
+              key="empty"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex flex-col items-center justify-center py-32 bg-zinc-50 dark:bg-zinc-900/20 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-[3rem]"
+            >
+              <div className="relative mb-6">
+                <div className="absolute inset-0 bg-[#8B1A1A]/20 blur-2xl rounded-full animate-pulse" />
+                <div className="relative p-6 bg-white dark:bg-zinc-800 rounded-3xl shadow-xl ring-1 ring-zinc-200 dark:ring-zinc-700">
+                  <Sparkles className="w-10 h-10 text-[#8B1A1A]" />
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">Ready to analyze?</h3>
+              <p className="text-zinc-500 text-center max-w-xs mt-3 font-medium">
+                Dapatkan analisis mendalam dan strategi bisnis berdasarkan performa studio Anda.
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Automation Summary & Notifications */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Summary */}
         <div className="bg-[#8B1A1A] rounded-2xl p-6 text-white">
@@ -162,31 +443,26 @@ Gunakan bahasa Indonesia yang profesional dan ringkas.`;
           </div>
         </div>
 
-        {/* AI Generate */}
-        <div className="bg-[#8B1A1A] rounded-2xl p-6 text-white flex flex-col">
+        {/* Automation Stats */}
+        <div className="bg-[#8B1A1A] rounded-2xl p-6 text-white">
           <div className="mb-4">
-            <p className="text-xs font-black uppercase tracking-widest text-white/70">AI Generate Analysis</p>
-            <p className="text-sm text-white/80">Analisis Otomatis (AI Analysis)</p>
+            <p className="text-xs font-black uppercase tracking-widest text-white/70">Automation Stats</p>
+            <p className="text-sm text-white/80">Statistik Hari Ini</p>
           </div>
-          <div className="bg-white/20 rounded-xl p-4 flex-1 min-h-[100px]">
-            {aiLoading ? (
-              <div className="flex items-center gap-2 text-white/70 text-sm">
-                <Loader2 size={16} className="animate-spin" /> Generating analisis...
-              </div>
-            ) : aiAnalysis ? (
-              <p className="text-sm leading-relaxed">{aiAnalysis}</p>
-            ) : (
-              <p className="text-sm text-white/50">Klik tombol di bawah untuk generate analisis AI berdasarkan data booking.</p>
-            )}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="bg-white/20 rounded-xl p-4 text-center">
+              <div className="text-2xl font-black">{stats.total}</div>
+              <div className="text-xs text-white/60">Total</div>
+            </div>
+            <div className="bg-white/20 rounded-xl p-4 text-center">
+              <div className="text-2xl font-black text-green-300">{stats.success}</div>
+              <div className="text-xs text-white/60">Berhasil</div>
+            </div>
+            <div className="bg-white/20 rounded-xl p-4 text-center">
+              <div className="text-2xl font-black text-red-300">{stats.failed}</div>
+              <div className="text-xs text-white/60">Gagal</div>
+            </div>
           </div>
-          <button
-            onClick={generateAI}
-            disabled={aiLoading}
-            className="mt-4 self-end flex items-center gap-2 px-4 py-2 rounded-xl bg-white text-[#8B1A1A] text-xs font-black hover:bg-white/90 transition disabled:opacity-50"
-          >
-            <Sparkles size={14} />
-            {aiLoading ? "Loading..." : "Generate Analisis"}
-          </button>
         </div>
       </div>
 
