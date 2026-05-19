@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Upload, X, Eye } from "lucide-react";
 
@@ -15,7 +15,7 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
   );
 }
 
-export default function EditPage() {
+function EditPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pageId = searchParams.get("id");
@@ -153,5 +153,13 @@ export default function EditPage() {
         </button>
       </div>
     </div>
+  );
+}
+
+export default function EditPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <EditPageContent />
+    </Suspense>
   );
 }
