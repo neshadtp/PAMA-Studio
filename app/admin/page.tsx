@@ -276,7 +276,10 @@ export default function AdminPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {packageStats.map((pkg) => {
+                {packageStats
+                .filter((p) => p.count > 0)
+                .slice(0, 4)
+                .map((pkg) => {
                   const pct = pkg.total > 0 ? Math.round((pkg.count / pkg.total) * 100) : 0;
                   return (
                     <div key={pkg.id}>
@@ -284,12 +287,12 @@ export default function AdminPage() {
                         <span className="font-medium text-[#1a0505] truncate">{pkg.title}</span>
                         <span className="text-[#8B1A1A] font-bold ml-2">{pkg.count}x</span>
                       </div>
-                      <div className="h-2.5 bg-[#8B1A1A]/5 rounded-full overflow-hidden">
+                      <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
                         <motion.div
                           initial={{ width: 0 }}
-                          animate={{ width: `${pct}%` }}
+                          animate={{ width: `${Math.max(pct, pkg.count > 0 ? 8 : 0)}%` }}
                           transition={{ duration: 0.8, ease: "easeOut" }}
-                          className="h-full bg-gradient-to-r from-[#8B1A1A] to-[#6B1212] rounded-full"
+                          className="h-full bg-[#C0392B] rounded-full"
                         />
                       </div>
                     </div>
