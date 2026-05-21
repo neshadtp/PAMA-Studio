@@ -14,26 +14,28 @@ export async function GET(request: NextRequest) {
   const limit = Math.min(50, Math.max(1, parseInt(url.searchParams.get("limit") ?? "20")));
   const offset = (page - 1) * limit;
 
-  const { data: orders, error: ordersError, count } = await supabase
-    .from("orders")
-    .select(`
-      id,
-      status,
-      created_at,
-      scheduled_at,
-      total_price_idr,
-      packages(title),
-      profiles(full_name, phone)
-    `, { count: "exact" })
-    .order("created_at", { ascending: false })
-    .range(offset, offset + limit - 1);
+  const { data, error, count } = await supabase
+  .from("orders")
+  .select(`
+    id,
+    user_id,
+    package_id,
+    status,
+    total_price_idr,
+    created_at,
+    scheduled_at,
+    payment_method,
+    packages(title)
+  `, { count: "exact" })
+  .order("created_at", { ascending: false })
+  .range(offset, offset + limit - 1);
 
-  if (ordersError) {
+  if (error) {
     return NextResponse.json({ message: "Failed to fetch orders" }, { status: 500 });
   }
 
   return NextResponse.json({
-    orders: orders || [],
+    orders: data || [],
     pagination: {
       page,
       limit,

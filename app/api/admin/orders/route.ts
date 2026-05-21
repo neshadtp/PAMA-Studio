@@ -11,7 +11,15 @@ export async function GET() {
   const supabase = await createSupabaseServerClient();
   const { data: recentOrders, error } = await supabase
     .from("orders")
-    .select("id, status, total_price_idr, created_at, scheduled_at, packages(title), profiles(full_name)")
+    .select(`
+      id,
+      user_id,
+      package_id,
+      status,
+      total_price_idr,
+      created_at,
+      scheduled_at
+    `)
     .order("created_at", { ascending: false })
     .limit(10);
 

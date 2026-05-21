@@ -288,7 +288,7 @@ export default function CheckoutContent() {
     setSelectedAddons((prev) => {
       const next = { ...prev };
       if (qty <= 0) delete next[addonId];
-      else next[addonId] = qty;
+      else next[addonId] = Math.min(qty, 20);
       return next;
     });
   };
@@ -505,9 +505,22 @@ export default function CheckoutContent() {
                                   <Minus className="h-3.5 w-3.5" />
                                 </button>
                                 <span className="w-6 text-center text-sm font-bold">{qty}</span>
-                                <button onClick={() => setAddonQty(addon.id, qty + 1)} className="flex h-8 w-8 items-center justify-center rounded-full border border-[#8B1A1A]/30 text-[#8B1A1A] hover:bg-[#8B1A1A] hover:text-white transition-all">
-                                  <Plus className="h-3.5 w-3.5" />
-                                </button>
+                                <button
+                                onClick={() => {
+                                  if (qty < 20) {
+                                    setAddonQty(addon.id, qty + 1);
+                                  }
+                                }}
+                                disabled={qty >= 20}
+                                className={`flex h-8 w-8 items-center justify-center rounded-full border transition-all
+                                  ${
+                                    qty >= 20
+                                      ? "border-gray-200 text-gray-300 cursor-not-allowed"
+                                      : "border-[#8B1A1A]/30 text-[#8B1A1A] hover:bg-[#8B1A1A] hover:text-white"
+                                  }`}
+                              >
+                                <Plus className="h-3.5 w-3.5" />
+                              </button>
                               </div>
                             )}
                           </div>

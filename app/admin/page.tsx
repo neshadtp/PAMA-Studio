@@ -86,12 +86,21 @@ function StatCard({ label, value, icon, color }: { label: string; value: number;
   );
 }
 
+type RecentOrder = {
+  id: string;
+  status: string;
+  total_price_idr: number;
+  created_at: string;
+  profiles: { full_name: string | null } | null;
+  packages: { title: string | null } | null;
+};
+
 export default function AdminPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [adminName, setAdminName] = useState("Admin");
   const [stats, setStats] = useState({ totalUsers: 0, totalOrders: 0, pendingOrders: 0, doneOrders: 0 });
-  const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [packageStats, setPackageStats] = useState<{ id: string; title: string; count: number; total: number }[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
 
@@ -238,7 +247,7 @@ export default function AdminPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-[#1a0505] truncate">
-                      {(order.profiles as any)?.full_name ?? "Customer"} — {(order.packages as any)?.title ?? "-"}
+                      {order.profiles?.full_name ?? "Customer"} — {order.packages?.title ?? "-"}
                     </p>
                     <p className="text-xs text-[#3a1a1a]/40 mt-0.5">
                       {new Date(order.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}

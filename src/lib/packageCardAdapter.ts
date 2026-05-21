@@ -21,10 +21,7 @@ function getGroupKey(p: DbPackage): string {
 
   if (p.type === "pas_foto") return "Pas Foto";
 
-  if (p.type === "jasa_fotografer") {
-    if (desc.includes("studio 2")) return "Jasa Fotografer";
-    return "Jasa Fotografer";
-  }
+  if (p.type === "jasa_fotografer") return "Jasa Fotografer";
 
   if (p.type === "self_photo") {
     if (desc.includes("studio 1")) return "Studio 1";
@@ -59,15 +56,19 @@ function defaultImagesByGroup(groupKey: string) {
   };
 }
 
-function getSubtitle(type: DbPackage["type"]) {
-  if (type === "self_photo") return "Self Photo Studio";
+function getSubtitle(type: DbPackage["type"], groupKey: string) {
+  if (groupKey === "Studio 1") return "Self Photo Studio 1 - Indoor";
+  if (groupKey === "Studio 2") return "Self Photo Studio 2 - Indoor";
+  if (groupKey === "Studio 2 (Molding)") return "Self Photo Studio 2 - Molding";
   if (type === "pas_foto") return "Pas Foto";
   return "Jasa Fotografer";
 }
 
-function getDescription(pkg: DbPackage): string {
+function getDescription(pkg: DbPackage, groupKey: string): string {
   if (pkg.description) return pkg.description;
-  if (pkg.type === "self_photo") return "Studio foto self-service dengan pencahayaan profesional. Kamu bisa foto sendiri atau bersama teman tanpa tekanan. Pilih variant sesuai kebutuhanmu.";
+  if (groupKey === "Studio 1") return "Studio foto self-service dengan pencahayaan profesional. Background: Putih, Abu-abu, Orange. Pilih variant sesuai kebutuhanmu.";
+  if (groupKey === "Studio 2") return "Studio foto self-service dengan konsep modern dan estetik. Pilih variant sesuai kebutuhanmu.";
+  if (groupKey === "Studio 2 (Molding)") return "Studio foto dengan konsep molding yang unik dan elegan. Cocok untuk foto bertema budaya dan seni.";
   if (pkg.type === "pas_foto") return "Layanan pas foto dengan edit rapi dan hasil natural. Cocok untuk dokumen resmi, CV, atau keperluan profesional lainnya.";
   return "Layanan fotografi profesional dengan fotografer berpengalaman. Hasil foto estetik dengan arah pose yang tepat untuk berbagai kebutuhan.";
 }
@@ -95,18 +96,15 @@ export function groupPackagesToCards(rows: DbPackage[]): PackageData[] {
         : "";
       const dur = p.duration_minutes ? `${p.duration_minutes} menit` : "";
 
-      // Ambil nama varian: bagian setelah "—" di title
       const variantName = p.title.includes("—")
         ? p.title.split("—").pop()?.trim() ?? p.title
-        : p.title
-            .replace(/studio \d+/gi, "")
-            .replace(/\(.*?\)/gi, "")
-            .trim() || p.title;
+        : p.title;
 
       return {
         name: variantName,
         description: [people, dur].filter(Boolean).join(" • "),
         price: formatIDR(p.base_price_idr),
+        packageId: p.id, // ← ID spesifik per subpaket
       };
     });
 
@@ -114,8 +112,8 @@ export function groupPackagesToCards(rows: DbPackage[]): PackageData[] {
       id: groupKey.toLowerCase().replace(/\s+/g, "-").replace(/[()]/g, ""),
       packageId: first.id,
       title: groupKey,
-      subtitle: getSubtitle(first.type),
-      description: getDescription(first),
+      subtitle: getSubtitle(first.type, groupKey),
+      description: getDescription(first, groupKey),
       image,
       galleryImages,
       subPackages,

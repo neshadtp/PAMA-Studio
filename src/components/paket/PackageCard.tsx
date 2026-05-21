@@ -11,7 +11,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 
 /* ── Types ── */
-export interface SubPackage { name: string; description: string; price: string; }
+export interface SubPackage { 
+  name: string; 
+  description: string; 
+  price: string;
+  packageId: string; // ← tambah ini
+}
+
 export interface AdditionalItem { name: string; price: string; }
 export interface PackageData {
   id: string; packageId: string; title: string; subtitle: string; description: string;
@@ -132,8 +138,8 @@ const PackageCard: React.FC<{ data: PackageData; index: number }> = ({ data, ind
                         <div className="ml-4 shrink-0 text-right">
                           <div className="text-[15px] font-semibold text-[#8B1A1A]" style={{ fontFamily: "Fraunces, serif" }}>{sub.price}</div>
                           <Link
-                            href={`/checkout?packageId=${encodeURIComponent(data.packageId)}`}
-                            onClick={(e) => handleBookingClick(e, data.packageId)}
+                            href={`/checkout?packageId=${encodeURIComponent(sub.packageId)}`}
+                            onClick={(e) => handleBookingClick(e, sub.packageId)}
                             className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[#8B1A1A] px-4 py-2 text-[11px] font-semibold uppercase tracking-wider text-white transition hover:bg-[#6B1212]"
                             style={{ fontFamily: "Inter Tight, sans-serif" }}
                           >
