@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
   const limit = Math.min(50, Math.max(1, parseInt(url.searchParams.get("limit") ?? "20")));
   const offset = (page - 1) * limit;
 
-  const { data, error, count } = await supabase
+const { data, error, count } = await supabase
   .from("orders")
   .select(`
     id,
@@ -25,7 +25,15 @@ export async function GET(request: NextRequest) {
     created_at,
     scheduled_at,
     payment_method,
-    packages(title)
+
+    profiles (
+      full_name,
+      email
+    ),
+
+    packages (
+      title
+    )
   `, { count: "exact" })
   .order("created_at", { ascending: false })
   .range(offset, offset + limit - 1);
