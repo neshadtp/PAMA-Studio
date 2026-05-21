@@ -1,28 +1,35 @@
 "use client";
 
-import React from "react";
 import Image from "next/image";
+import { useInView } from "@/hooks/useInView";
 
-const Portfolio: React.FC = () => {
-  const row1 = [
-    "/images/foto4.webp",
-    "/images/foto1.webp",
-    "/images/foto2.webp",
-    "/images/foto3.webp",
-    "/images/foto5.webp",
-    "/images/foto6.webp",
-  ];
-  const row2 = [
-    "/images/foto7.webp",
-    "/images/foto8.webp",
-    "/images/foto9.webp",
-    "/images/foto10.webp",
-    "/images/foto11.webp",
-    "/images/foto12.webp",
-  ];
+const row1 = [
+  "/images/foto4.webp",
+  "/images/foto1.webp",
+  "/images/foto2.webp",
+  "/images/foto3.webp",
+  "/images/foto5.webp",
+  "/images/foto6.webp",
+];
+
+const row2 = [
+  "/images/foto7.webp",
+  "/images/foto8.webp",
+  "/images/foto9.webp",
+  "/images/foto10.webp",
+  "/images/foto11.webp",
+  "/images/foto12.webp",
+];
+
+export default function Portfolio() {
+  const { ref, inView } = useInView({ threshold: 0.15, triggerOnce: false });
 
   return (
-    <section id="portofolio" className="relative bg-[#FBF7F1] py-16 lg:py-24">
+    <section
+      id="portofolio"
+      ref={ref}
+      className="relative bg-[#FBF7F1] py-16 lg:py-24"
+    >
       <div className="mx-auto max-w-7xl px-5 lg:px-8">
         <div className="flex flex-col items-center text-center">
           <span
@@ -47,46 +54,62 @@ const Portfolio: React.FC = () => {
         </div>
       </div>
 
-      {/* Marquee rows */}
       <div className="relative mt-12 space-y-5 overflow-hidden">
-        {/* gradient edges */}
         <div className="pointer-events-none absolute left-0 top-0 z-10 h-full w-16 bg-gradient-to-r from-[#FBF7F1] to-transparent sm:w-32" />
         <div className="pointer-events-none absolute right-0 top-0 z-10 h-full w-16 bg-gradient-to-l from-[#FBF7F1] to-transparent sm:w-32" />
 
-        {/* Row 1 — scrolls left */}
         <div className="group flex gap-5 overflow-hidden">
-          <div className="flex shrink-0 animate-[marqueeLeft_45s_linear_infinite] gap-5 group-hover:[animation-play-state:paused]">
+          <div
+            className={[
+              "flex shrink-0 gap-5 will-change-transform",
+              inView
+                ? "animate-none md:animate-[marqueeLeft_45s_linear_infinite]"
+                : "animate-none md:animate-none",
+              "group-hover:[animation-play-state:paused]",
+            ].join(" ")}
+          >
             {[...row1, ...row1].map((src, i) => (
               <div
                 key={`r1-${i}`}
-                className="relative h-64 w-48 shrink-0 overflow-hidden rounded-2xl shadow-md sm:h-80 sm:w-60"
+                className="relative h-64 w-48 shrink-0 overflow-hidden rounded-2xl shadow-md sm:h-80 sm:w-60 motion-reduce:animate-none"
+                style={{ contain: "layout paint size" }}
               >
                 <Image
                   src={src}
                   alt={`Portfolio ${i}`}
                   fill
                   unoptimized
-                  className="object-cover transition duration-500 hover:scale-110"
+                  sizes="(max-width: 640px) 192px, 240px"
+                  className="object-cover transition duration-500 will-change-transform hover:scale-110"
                 />
               </div>
             ))}
           </div>
         </div>
 
-        {/* Row 2 — scrolls right */}
         <div className="group flex gap-5 overflow-hidden">
-          <div className="flex shrink-0 animate-[marqueeRight_50s_linear_infinite] gap-5 group-hover:[animation-play-state:paused]">
+          <div
+            className={[
+              "flex shrink-0 gap-5 will-change-transform",
+              inView
+                ? "animate-none md:animate-[marqueeRight_50s_linear_infinite]"
+                : "animate-none md:animate-none",
+              "group-hover:[animation-play-state:paused]",
+            ].join(" ")}
+          >
             {[...row2, ...row2].map((src, i) => (
               <div
                 key={`r2-${i}`}
-                className="relative h-64 w-48 shrink-0 overflow-hidden rounded-2xl shadow-md sm:h-80 sm:w-60"
+                className="relative h-64 w-48 shrink-0 overflow-hidden rounded-2xl shadow-md sm:h-80 sm:w-60 motion-reduce:animate-none"
+                style={{ contain: "layout paint size" }}
               >
                 <Image
                   src={src}
                   alt={`Portfolio ${i}`}
                   fill
                   unoptimized
-                  className="object-cover transition duration-500 hover:scale-110"
+                  sizes="(max-width: 640px) 192px, 240px"
+                  className="object-cover transition duration-500 will-change-transform hover:scale-110"
                 />
               </div>
             ))}
@@ -94,7 +117,6 @@ const Portfolio: React.FC = () => {
         </div>
       </div>
 
-      {/* Marquee keyframes */}
       <style>{`
         @keyframes marqueeLeft {
           0% { transform: translateX(0); }
@@ -107,6 +129,4 @@ const Portfolio: React.FC = () => {
       `}</style>
     </section>
   );
-};
-
-export default Portfolio;
+}

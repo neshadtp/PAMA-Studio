@@ -20,8 +20,13 @@ const ChatbotWidget = () => {
   const FLOWISE_CHATFLOW_ID = process.env.NEXT_PUBLIC_FLOWISE_CHATFLOW_ID;
   const FLOWISE_API_HOST = process.env.NEXT_PUBLIC_FLOWISE_API_HOST;
 
-  // Don't show chatbot on admin pages
-  if (pathname?.startsWith('/admin') || pathname?.startsWith('/checkout')) {
+  // Only show chatbot on public pages and user panel
+  const allowedPaths = ['/', '/paket', '/dashboard-client'];
+  const isAllowedPath = allowedPaths.some(path => 
+    pathname === path || pathname.startsWith(path + '/')
+  );
+
+  if (!isAllowedPath) {
     return null;
   }
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter_Tight, Fraunces } from "next/font/google";
 import "./globals.css";
 import ChatbotWidget from '../src/components/ChatbotWidget';
+import ChatbotGuard from '../src/components/ChatbotGuard';
 import { ToastProvider } from '@/contexts/ToastContext';
 
 const interTight = Inter_Tight({ 
@@ -61,8 +62,8 @@ export default function RootLayout({
         <ToastProvider>
           {children}
           
-          {/* ChatbotWidget muncul di semua page */}
-          <ChatbotWidget />
+          {/* Chatbot hanya muncul di public pages dan user panel saja */}
+          <ChatbotGuard />
         </ToastProvider>
       </body>
     </html>
