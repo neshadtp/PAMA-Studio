@@ -7,12 +7,21 @@ import {
   BarChart3,
   Users,
   Clock,
-  Monitor,
+  Camera,
   LogOut,
   Bell,
   Search
 } from 'lucide-react';
 import { useState } from 'react';
+  Search,
+  Menu,
+  X,
+  Package,
+  Home,
+  FileText,
+  Settings,
+} from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 
 const menuItems = [
@@ -21,6 +30,7 @@ const menuItems = [
   { name: "Operational", icon: Users, path: "/admin/operational" },
   { name: "Automation", icon: Clock, path: "/admin/automation" },
   { name: "Photographers", icon: Monitor, path: "/admin/photographers" },
+  { name: "Photographers", icon: Camera, path: "/admin/photographers" },
   { name: "Packages", icon: Package, path: "/admin/packages" },
   { name: "Page Management", icon: FileText, path: "/admin/pagemanagement" },
   { name: "Settings", icon: Settings, path: "/admin/settings" },
@@ -31,14 +41,31 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const { profile, logout, ready } = useAuth();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
+  const [today, setToday] = useState("");
   const [currentTime, setCurrentTime] = useState("");
+  const mainRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    setToday(
+      new Date().toLocaleDateString("id-ID", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
+    );
+
     const update = () => setCurrentTime(new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }));
     update();
     const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    setSidebarOpen(false);
+    mainRef.current?.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [pathname]);
 
   const handleLogout = async () => {
     await logout();
@@ -55,8 +82,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         .toUpperCase()
     : "SA";
 
-  const today = new Date().toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
-
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
       {/* SIDEBAR MERAH */}
@@ -68,8 +93,38 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
         <span className="font-bold text-xl tracking-wide">PAMA Studio</span>
       </div>
+    <div className="flex h-screen bg-[#FBF7F1] overflow-hidden">
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
-          <nav className="flex-1 space-y-2">
+      <aside
+        className={`
+          fixed inset-y-0 left-0 z-50 w-72 bg-[#8B1A1A] text-white transform transition-transform duration-300 lg:relative lg:translate-x-0
+          ${isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
+        `}
+      >
+        <div className="flex flex-col h-full p-6 overflow-hidden">
+          <div className="flex items-center gap-3 mb-10">
+            <div className="relative h-11 w-11 flex-shrink-0 overflow-hidden rounded-xl bg-white">
+              <Image src="/logo.png" alt="Logo PAMA" fill className="object-contain p-1" />
+            </div>
+            <div>
+              <span className="font-bold text-xl tracking-wide" style={{ fontFamily: "Fraunces, serif" }}>PAMA</span>
+              <span className="text-xs text-red-200 block -mt-0.5">Studio Admin</span>
+            </div>
+            <button
+              onClick={() => setSidebarOpen(false)}
+              className="ml-auto lg:hidden p-2 rounded-full hover:bg-white/10"
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          <nav className="admin-sidebar-scrollbar flex-1 min-h-0 space-y-2 overflow-y-auto pr-2">
             {menuItems.map((item) => {
               const isActive = pathname === item.path;
               return (
@@ -171,10 +226,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               />
               <span className="text-sm font-medium text-gray-700 hidden md:block">SuperAdminZ</span>
             </div>
+          <div className="flex items-center gap-3">
+            {ready && (
+              <div className="flex items-center gap-2">
+                <div className="hidden sm:flex h-8 w-8 items-center justify-center rounded-full bg-[#8B1A1A] text-white text-xs font-bold">
+                  {userInitials}
+                </div>
+                <span className="text-sm font-medium text-[#1a0505] hidden md:block">
+                  {profile?.full_name ?? "Admin"}
+                </span>
+              </div>
+            )}
           </div>
         </header>
 
-        <div className="flex-1 overflow-auto p-6 bg-[#FBF7F1]">{children}</div>
+        <div ref={mainRef} className="flex-1 overflow-auto p-4 bg-[#FBF7F1] sm:p-6">
+          <div className="mx-auto w-full max-w-[1600px]">{children}</div>
+        </div>
       </main>
     </div>
   );

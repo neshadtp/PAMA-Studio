@@ -97,7 +97,7 @@ const BestSeller: React.FC = () => {
         }}
       />
 
-      <div className="relative mx-auto max-w-7xl px-5 lg:px-8">
+      <div className="page-shell relative px-5 lg:px-8">
         <div
           ref={headerRef}
           className="grid items-end gap-8 lg:grid-cols-12"
@@ -151,7 +151,7 @@ const BestSeller: React.FC = () => {
             ? [1, 2, 3].map((i) => (
                 <div
                   key={i}
-                  className="h-[500px] rounded-[28px] bg-white/10 animate-pulse"
+                  className="h-[360px] rounded-[28px] bg-white/10 animate-pulse sm:h-[420px] lg:h-[500px]"
                 />
               ))
             : displayPackages.map((p, i) => (
@@ -185,7 +185,7 @@ const BestSeller: React.FC = () => {
                       alt={p.studio}
                       fill
                       unoptimized
-                      className="object-cover transition duration-700 group-hover:scale-105"
+                      className="media-safe object-cover transition duration-700 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
 

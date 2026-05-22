@@ -218,7 +218,7 @@ export default function MonitoringPage() {
           <h2 className="font-bold text-[#1a0505] mb-5 flex items-center gap-2">
             <Wifi size={18} className="text-[#8B1A1A]" /> Website Performance
           </h2>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {[
               { label: "Users Online", value: perf.usersOnline, icon: <Users size={20} />, color: "bg-blue-50 text-blue-600" },
               { label: "Response Time", value: perf.responseTime, icon: <Clock size={20} />, color: "bg-green-50 text-green-600" },
@@ -329,7 +329,7 @@ export default function MonitoringPage() {
               </div>
               <p className="text-xs text-[#3a1a1a]/40 mt-1">{storagePercent.toFixed(2)}% terpakai</p>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="bg-[#FBF7F1] rounded-xl p-3">
                 <p className="text-xs text-[#3a1a1a]/40 mb-1">Sisa Storage</p>
                 <p className="text-lg font-black text-[#1a0505]">{formatBytes(storage.total - storage.used)}</p>

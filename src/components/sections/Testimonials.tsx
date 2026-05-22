@@ -63,7 +63,7 @@ const Testimonials: React.FC = () => {
 
   return (
     <section id="testimoni" className="relative bg-[#FBF7F1] py-16 lg:py-24">
-      <div className="mx-auto max-w-7xl px-5 lg:px-8">
+      <div className="page-shell px-5 lg:px-8">
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-12">
           <div className="lg:col-span-4">
             <span
@@ -117,7 +117,7 @@ const Testimonials: React.FC = () => {
                       width={64}
                       height={64}
                       unoptimized
-                      className="relative h-16 w-16 rounded-full border-2 border-white object-cover shadow-lg"
+                      className="media-safe relative h-16 w-16 rounded-full border-2 border-white object-cover shadow-lg"
                     />
                   ) : (
                     <div className="relative h-16 w-16 rounded-full border-2 border-white bg-[#8B1A1A] flex items-center justify-center shadow-lg">
@@ -195,7 +195,7 @@ const Testimonials: React.FC = () => {
                         height={48}
                         unoptimized
                         className={[
-                          "h-12 w-12 shrink-0 rounded-full border-2 object-cover transition",
+                          "media-safe h-12 w-12 shrink-0 rounded-full border-2 object-cover transition",
                           active === i ? "border-white" : "border-[#8B1A1A]/20",
                         ].join(" ")}
                       />

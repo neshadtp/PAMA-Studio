@@ -255,7 +255,7 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Max Booking Per Hari</label>
                 <input value={maxBooking} onChange={e => setMaxBooking(e.target.value)}
@@ -334,37 +334,6 @@ export default function SettingsPage() {
             <button className="mt-3 w-full py-2 rounded-xl border border-red-200 text-[#8B1A1A] text-xs font-bold hover:bg-red-50 transition">
               Logout dari Semua Perangkat
             </button>
-          </div>
-
-          {/* Tampilan */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
-                <Monitor size={20} className="text-[#8B1A1A]" />
-              </div>
-              <h2 className="font-bold text-gray-800">Tampilan</h2>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Theme</label>
-                <div className="flex gap-2">
-                  {(["Light", "Dark"] as const).map(t => (
-                    <button key={t} onClick={() => setTheme(t)}
-                      className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition ${theme === t ? "bg-[#8B1A1A] text-white" : "bg-gray-100 text-gray-500"}`}>
-                      {t}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Bahasa</label>
-                <select value={language} onChange={e => setLanguage(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-[#8B1A1A]/20 bg-white">
-                  <option>Bahasa Indonesia</option>
-                  <option>English</option>
-                </select>
-              </div>
-            </div>
           </div>
 
           {/* Backup & Export */}

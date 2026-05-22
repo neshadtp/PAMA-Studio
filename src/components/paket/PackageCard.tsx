@@ -67,13 +67,13 @@ const PackageCard: React.FC<{ data: PackageData; index: number }> = ({ data, ind
           
           {/* ── Kiri: Gambar (Di Laptop) ── */}
           <div className="relative w-full lg:w-5/12 shrink-0">
-            <div className="relative aspect-[4/3] w-full h-full min-h-[300px] lg:min-h-full overflow-hidden">
+            <div className="relative aspect-[4/3] w-full h-full min-h-[220px] overflow-hidden sm:min-h-[260px] lg:min-h-full">
               <Image
                 src={data.image}
                 alt={data.title}
                 fill
                 unoptimized
-                className="object-cover transition duration-700 group-hover:scale-105"
+                className="media-safe object-cover transition duration-700 group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#1a0505]/40 via-transparent to-transparent lg:bg-gradient-to-r lg:from-transparent lg:via-transparent lg:to-[#1a0505]/10" />
               

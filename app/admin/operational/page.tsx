@@ -9,6 +9,14 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import Link from "next/link";
 
+function getAutoStatus(order: any) {
+  if (order.status === "cancelled") return "cancelled";
+  if (!order.scheduled_at) return order.status;
+  const now = new Date();
+  const scheduled = new Date(order.scheduled_at);
+  return now > scheduled ? "done" : "scheduled";
+}
+
 function formatTime(iso: string) {
   return new Date(iso).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
 }
@@ -142,52 +150,49 @@ export default function OperationalPage() {
   const [pendingCount, setPendingCount] = useState(0);
   const [longestPending, setLongestPending] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 1 });
+  const [pagination, setPagination] = useState({ page: 1, limit: 50, total: 0, totalPages: 1 });
 
-  const fetchData = async (page = 1) => {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/admin/operational?page=${page}&limit=20`);
-      if (!res.ok) {
-        console.error("Failed to fetch operational data");
-        return;
-      }
-      const data = await res.json();
+const fetchData = async (page = 1) => {
+  setLoading(true);
+  try {
+    const [res, todayRes] = await Promise.all([
+      fetch(`/api/admin/operational?page=${page}&limit=50`),
+      fetch(`/api/admin/operational?today=true`),
+    ]);
 
-      setOrders(data.orders);
-      setPagination(data.pagination);
+    if (!res.ok) { console.error("Failed to fetch operational data"); return; }
 
-      const today = new Date().toISOString().slice(0, 10);
-      const todayData = data.orders.filter((o: any) =>
-        o.scheduled_at?.startsWith(today)
-      );
-      setTodayOrders(todayData);
+    const data = await res.json();
+    const todayData = await todayRes.json();
 
-      const now = new Date();
-      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+    setOrders(data.orders);
+    setPagination(data.pagination);
+    setTodayOrders(todayData.orders);
 
-      const thisWeekOrders = data.orders.filter((o: any) =>
-        new Date(o.created_at) >= weekAgo
-      ).length;
+    const now = new Date();
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
 
-      const lastWeekOrders = data.orders.filter((o: any) =>
-        new Date(o.created_at) >= twoWeeksAgo && new Date(o.created_at) < weekAgo
-      ).length;
+    const thisWeekOrders = data.orders.filter((o: any) =>
+      new Date(o.created_at) >= weekAgo
+    ).length;
 
-      setWeekStats({ thisWeek: thisWeekOrders, lastWeek: lastWeekOrders });
+    const lastWeekOrders = data.orders.filter((o: any) =>
+      new Date(o.created_at) >= twoWeeksAgo && new Date(o.created_at) < weekAgo
+    ).length;
 
-      const pendingOrders = data.orders.filter((o: any) => o.status === "pending");
-      setPendingCount(pendingOrders.length);
-      if (pendingOrders.length > 0) {
-        setLongestPending(pendingOrders[0].created_at);
-      }
-    } catch (error) {
-      console.error("Fetch data error:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    setWeekStats({ thisWeek: thisWeekOrders, lastWeek: lastWeekOrders });
+
+    const pendingOrders = data.orders.filter((o: any) => o.status === "pending");
+    setPendingCount(pendingOrders.length);
+    if (pendingOrders.length > 0) setLongestPending(pendingOrders[0].created_at);
+
+  } catch (error) {
+    console.error("Fetch data error:", error);
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     const checkAdmin = async () => {
@@ -213,31 +218,19 @@ export default function OperationalPage() {
     checkAdmin();
   }, [router]);
 
-  const handleStatusUpdate = async (id: string, status: string) => {
-    try {
-      const res = await fetch("/api/admin/operational", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId: id, status }),
-      });
-
-      if (res.ok) {
-        setOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o));
-        setTodayOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o));
-        if (status !== "pending") setPendingCount(prev => Math.max(0, prev - 1));
-      }
-    } catch (error) {
-      console.error("Status update error:", error);
-    }
-  };
+  const handleStatusUpdate = (id: string, status: string) => {
+  setOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o));
+  setTodayOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o));
+  if (status !== "pending") setPendingCount(prev => Math.max(0, prev - 1));
+};
 
   const pct = weekStats.lastWeek > 0
-    ? Math.round(((weekStats.thisWeek - weekStats.lastWeek) / weekStats.lastWeek) * 100)
-    : weekStats.thisWeek > 0 ? 100 : 0;
+  ? Math.round(((weekStats.thisWeek - weekStats.lastWeek) / weekStats.lastWeek) * 100)
+  : weekStats.thisWeek > 0 ? 100 : 0;
 
   const todayStr = new Date().toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
-  const todayBooking = orders.filter(o => o.created_at?.startsWith(new Date().toISOString().slice(0, 10))).length;
-  const inProgressCount = orders.filter(o => o.status === "in_progress").length;
+  const todayBooking = todayOrders.length;
+  const inProgressCount = todayOrders.filter((o: any) => getAutoStatus(o) === "done").length;
 
   const exportCSV = () => {
     const rows = [["ID", "Customer", "Paket", "Status", "Jadwal", "Total"]];
@@ -342,7 +335,7 @@ export default function OperationalPage() {
             </div>
             <div>
               <p className="text-3xl font-black text-[#1a0505]">{todayBooking} <span className="text-base font-medium text-[#3a1a1a]/50">Booking</span></p>
-              <p className="text-xs text-[#3a1a1a]/50 mt-1">{inProgressCount} booking berlangsung</p>
+              <p className="text-xs text-[#3a1a1a]/50 mt-1">{inProgressCount} booking selesai</p>
             </div>
           </div>
         </motion.div>
@@ -402,7 +395,15 @@ export default function OperationalPage() {
                     <td className="px-6 py-4 text-[#3a1a1a]/70">{(order.packages as any)?.title ?? "-"}</td>
                     <td className="px-6 py-4 text-[#1a0505]">{(order.profiles as any)?.full_name ?? "-"}</td>
                     <td className="px-6 py-4">
-                      <StatusDropdown orderId={order.id} current={order.status} onUpdate={handleStatusUpdate} />
+                      {(() => {
+                        const auto = getAutoStatus(order);
+                        return (
+                          <span className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold w-fit ${STATUS_COLOR[auto]}`}>
+                            <span className={`w-2 h-2 rounded-full ${STATUS_DOT[auto]}`} />
+                            {STATUS_LABEL[auto]}
+                        </span>
+                        );
+                      })()}
                     </td>
                   </tr>
                 ))}

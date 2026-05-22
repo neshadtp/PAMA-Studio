@@ -6,7 +6,7 @@ export async function createSupabaseServerClient() {
   
   try {
     cookieStore = await cookies();
-  } catch (error) {
+  } catch {
     // During build time or without request context, cookies() may not be available
     // Provide a no-op cookie store that returns empty values
     cookieStore = {

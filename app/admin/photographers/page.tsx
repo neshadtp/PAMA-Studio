@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   Loader2, Plus, RefreshCw, Trash2, X, Calendar, Clock, User,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import ModalPortal from "@/components/ui/ModalPortal";
 
 function timeSlotLabel(start: string, end: string) {
   const fmt = (iso: string) => new Date(iso).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
@@ -25,7 +26,7 @@ export default function PhotographersPage() {
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState("");
 
-  const fetchSlots = async () => {
+  const fetchSlots = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -39,7 +40,7 @@ export default function PhotographersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedResource, selectedDate]);
 
   useEffect(() => {
     const checkAdmin = async () => {
@@ -53,11 +54,11 @@ export default function PhotographersPage() {
       } catch { router.push("/"); }
     };
     checkAdmin();
-  }, [router]);
+  }, [router, fetchSlots]);
 
   useEffect(() => {
     if (isAdmin) fetchSlots();
-  }, [selectedResource, selectedDate, isAdmin]);
+  }, [selectedResource, selectedDate, isAdmin, fetchSlots]);
 
   const handleCreateSlot = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,49 +98,51 @@ export default function PhotographersPage() {
     </div>
   );
 
-  return (
-    <div className="space-y-8">
-      {createOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
-          <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className="w-full max-w-md overflow-hidden rounded-[32px] bg-white shadow-2xl">
-            <div className="bg-[#8B1A1A] p-6 text-white flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="bg-white/20 p-2.5 rounded-xl"><Clock size={20} /></div>
-                <div><h2 className="font-bold" style={{ fontFamily: "Fraunces, serif" }}>Tambah Slot Jadwal</h2><p className="text-xs text-white/70">Atur waktu tersedia fotografer</p></div>
-              </div>
-              <button onClick={() => setCreateOpen(false)} className="p-2 hover:bg-white/10 rounded-full"><X size={20} /></button>
-            </div>
-            <form onSubmit={handleCreateSlot} className="p-6 space-y-4">
-              {formError && <div className="rounded-xl bg-red-50 border border-red-200 p-3 text-sm text-red-600">{formError}</div>}
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-[#8B1A1A] mb-1.5">Resource / Fotografer</label>
-                <select value={form.resource_id} onChange={e => setForm({ ...form, resource_id: e.target.value })} required className="w-full rounded-xl border border-[#8B1A1A]/20 bg-[#FBF7F1] p-3 text-sm outline-none focus:border-[#8B1A1A]">
-                  <option value="">Pilih resource</option>
-                  {resources.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-[#8B1A1A] mb-1.5">Tanggal</label>
-                <input type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} required min={new Date().toISOString().split("T")[0]} className="w-full rounded-xl border border-[#8B1A1A]/20 bg-[#FBF7F1] p-3 text-sm outline-none focus:border-[#8B1A1A]" />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-[#8B1A1A] mb-1.5">Mulai</label>
-                  <input type="time" value={form.start_time} onChange={e => setForm({ ...form, start_time: e.target.value })} required className="w-full rounded-xl border border-[#8B1A1A]/20 bg-[#FBF7F1] p-3 text-sm outline-none focus:border-[#8B1A1A]" />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-[#8B1A1A] mb-1.5">Selesai</label>
-                  <input type="time" value={form.end_time} onChange={e => setForm({ ...form, end_time: e.target.value })} required className="w-full rounded-xl border border-[#8B1A1A]/20 bg-[#FBF7F1] p-3 text-sm outline-none focus:border-[#8B1A1A]" />
-                </div>
-              </div>
-              <button type="submit" disabled={formLoading} className="w-full py-3.5 rounded-xl bg-[#8B1A1A] text-white font-bold text-sm hover:bg-[#6B1212] transition-all disabled:opacity-50 flex items-center justify-center gap-2">
-                {formLoading ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />} Tambah Slot
-              </button>
-            </form>
-          </motion.div>
+  const modal = createOpen ? (
+    <div className="fixed inset-0 z-[100] flex h-[100dvh] w-[100vw] items-center justify-center bg-black/60 backdrop-blur-md p-4">
+      <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className="w-full max-w-md overflow-hidden rounded-[32px] bg-white shadow-2xl">
+        <div className="bg-[#8B1A1A] p-6 text-white flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="bg-white/20 p-2.5 rounded-xl"><Clock size={20} /></div>
+            <div><h2 className="font-bold" style={{ fontFamily: "Fraunces, serif" }}>Tambah Slot Jadwal</h2><p className="text-xs text-white/70">Atur waktu tersedia fotografer</p></div>
+          </div>
+          <button onClick={() => setCreateOpen(false)} className="p-2 hover:bg-white/10 rounded-full"><X size={20} /></button>
         </div>
-      )}
+        <form onSubmit={handleCreateSlot} className="p-6 space-y-4">
+          {formError && <div className="rounded-xl bg-red-50 border border-red-200 p-3 text-sm text-red-600">{formError}</div>}
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-[#8B1A1A] mb-1.5">Resource / Fotografer</label>
+            <select value={form.resource_id} onChange={e => setForm({ ...form, resource_id: e.target.value })} required className="w-full rounded-xl border border-[#8B1A1A]/20 bg-[#FBF7F1] p-3 text-sm outline-none focus:border-[#8B1A1A]">
+              <option value="">Pilih resource</option>
+              {resources.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-[#8B1A1A] mb-1.5">Tanggal</label>
+            <input type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} required min={new Date().toISOString().split("T")[0]} className="w-full rounded-xl border border-[#8B1A1A]/20 bg-[#FBF7F1] p-3 text-sm outline-none focus:border-[#8B1A1A]" />
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#8B1A1A] mb-1.5">Mulai</label>
+              <input type="time" value={form.start_time} onChange={e => setForm({ ...form, start_time: e.target.value })} required className="w-full rounded-xl border border-[#8B1A1A]/20 bg-[#FBF7F1] p-3 text-sm outline-none focus:border-[#8B1A1A]" />
+            </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#8B1A1A] mb-1.5">Selesai</label>
+              <input type="time" value={form.end_time} onChange={e => setForm({ ...form, end_time: e.target.value })} required className="w-full rounded-xl border border-[#8B1A1A]/20 bg-[#FBF7F1] p-3 text-sm outline-none focus:border-[#8B1A1A]" />
+            </div>
+          </div>
+          <button type="submit" disabled={formLoading} className="w-full py-3.5 rounded-xl bg-[#8B1A1A] text-white font-bold text-sm hover:bg-[#6B1212] transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+            {formLoading ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />} Tambah Slot
+          </button>
+        </form>
+      </motion.div>
+    </div>
+  ) : null;
 
+  return (
+    <>
+      {modal && <ModalPortal>{modal}</ModalPortal>}
+      <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#8B1A1A]">Manajemen Jadwal</span>
@@ -159,7 +162,7 @@ export default function PhotographersPage() {
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="flex items-center gap-2 rounded-2xl border border-[#8B1A1A]/10 bg-white px-4">
           <User size={16} className="text-[#8B1A1A]/30" />
-          <select value={selectedResource} onChange={e => setSelectedResource(e.target.value)} className="py-3 text-sm outline-none bg-transparent flex-1">
+          <select value={selectedResource} onChange={e => setSelectedResource(e.target.value)} className="py-3 text-sm text-[#1a0505] outline-none bg-transparent flex-1">
             <option value="">Semua Resource</option>
             {resources.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
           </select>
@@ -229,6 +232,7 @@ export default function PhotographersPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }

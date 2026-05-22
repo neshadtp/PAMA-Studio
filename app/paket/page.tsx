@@ -26,9 +26,9 @@ const PACKAGE_TYPE_MAP: Record<Exclude<FilterKey, "all">, "self_photo" | "pas_fo
 function PaketHeroSSR() {
   return (
     <section className="relative overflow-hidden bg-[#FBF7F1] pt-32 pb-10 lg:pt-40 lg:pb-16">
-      <div className="pointer-events-none absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-[#8B1A1A]/8 blur-[120px]" />
-      <div className="pointer-events-none absolute bottom-0 -left-32 h-[350px] w-[350px] rounded-full bg-[#D4A373]/15 blur-[100px]" />
-      <div className="relative mx-auto max-w-7xl px-5 lg:px-8">
+      <div className="pointer-events-none absolute -top-28 -right-28 h-[320px] w-[320px] rounded-full bg-[#8B1A1A]/8 blur-[120px] sm:-top-36 sm:-right-36 sm:h-[420px] sm:w-[420px] lg:h-[500px] lg:w-[500px]" />
+      <div className="pointer-events-none absolute bottom-0 -left-24 h-[220px] w-[220px] rounded-full bg-[#D4A373]/15 blur-[100px] sm:-left-28 sm:h-[300px] sm:w-[300px] lg:-left-32 lg:h-[350px] lg:w-[350px]" />
+      <div className="page-shell relative px-5 lg:px-8">
         <Link
           href="/"
           className="group mb-6 inline-flex items-center gap-2 rounded-full border border-[#8B1A1A]/20 bg-white/60 px-4 py-2 text-sm font-medium text-[#8B1A1A] backdrop-blur-sm transition hover:bg-white/80"
@@ -123,7 +123,7 @@ export default async function PaketPage({
 
       {/* Filter pills */}
       <section className="relative bg-[#FBF7F1] pb-4">
-        <div className="mx-auto max-w-7xl px-5 lg:px-8">
+        <div className="page-shell px-5 lg:px-8">
           <div className="flex flex-wrap gap-2.5">
             {FILTERS.map((f) => {
               const active = (filter ?? "all") === f.key;
@@ -153,10 +153,10 @@ export default async function PaketPage({
 
       {/* Cards */}
       <section className="relative bg-[#FBF7F1] pb-10 lg:pb-16">
-        <div className="pointer-events-none absolute left-0 top-1/4 h-[300px] w-[300px] rounded-full bg-[#8B1A1A]/5 blur-[100px]" />
-        <div className="pointer-events-none absolute right-0 top-2/3 h-[250px] w-[250px] rounded-full bg-[#D4A373]/10 blur-[80px]" />
+        <div className="pointer-events-none absolute left-0 top-1/4 h-[180px] w-[180px] rounded-full bg-[#8B1A1A]/5 blur-[100px] sm:h-[240px] sm:w-[240px] lg:h-[300px] lg:w-[300px]" />
+        <div className="pointer-events-none absolute right-0 top-2/3 h-[150px] w-[150px] rounded-full bg-[#D4A373]/10 blur-[80px] sm:h-[200px] sm:w-[200px] lg:h-[250px] lg:w-[250px]" />
 
-        <div className="relative mx-auto max-w-7xl space-y-16 px-5 lg:px-8">
+        <div className="page-shell relative space-y-16 px-5 lg:px-8">
           {error ? (
             <div className="rounded-2xl border border-[#8B1A1A]/20 bg-white/70 p-6 text-sm" style={{ fontFamily: "Inter Tight, sans-serif" }}>
               Gagal load paket: {error.message}
@@ -171,7 +171,7 @@ export default async function PaketPage({
         </div>
 
         {/* Pagination */}
-        <div className="mx-auto mt-10 max-w-7xl px-5 lg:px-8">
+        <div className="page-shell mt-10 px-5 lg:px-8">
           <div className="flex items-center justify-center gap-2">
             <Link
               aria-disabled={page <= 1}

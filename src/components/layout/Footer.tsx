@@ -47,7 +47,7 @@ const Footer: React.FC = () => {
         {/* Glow atas */}
         <div className="pointer-events-none absolute -top-24 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-[#8B1A1A]/40 blur-[120px]" />
 
-        <div className="relative mx-auto max-w-7xl px-6 py-16 lg:px-10">
+        <div className="page-shell relative px-6 py-16 lg:px-10">
           <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-12">
 
             {/* ── Brand ── */}

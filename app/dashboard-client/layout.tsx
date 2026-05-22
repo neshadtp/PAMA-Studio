@@ -132,15 +132,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <span className="font-bold text-[#8B1A1A] text-lg" style={{ fontFamily: "Fraunces, serif" }}>PAMA</span>
             <span className="text-xs text-[#3a1a1a]/50">Client</span>
           </div>
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="p-2 text-[#8B1A1A] hover:bg-[#8B1A1A]/5 rounded-lg"
-          >
-            <Menu size={24} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="p-2 text-[#8B1A1A] hover:bg-[#8B1A1A]/5 rounded-lg"
+            >
+              <Menu size={24} />
+            </button>
+          </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-4 lg:p-8">{children}</div>
+        <div className="flex-1 overflow-y-auto p-4 lg:px-8 lg:pb-8">
+          <div className="mx-auto w-full max-w-[1400px]">{children}</div>
+        </div>
       </main>
     </div>
   );

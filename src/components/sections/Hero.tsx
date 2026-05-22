@@ -23,7 +23,7 @@ const Hero: React.FC = () => {
         }}
       />
 
-      <div className="relative mx-auto max-w-7xl px-5 lg:px-8">
+      <div className="page-shell relative px-5 lg:px-8">
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-12">
           {/* Text */}
           <div className="lg:col-span-7 lg:pt-6">
@@ -95,7 +95,7 @@ const Hero: React.FC = () => {
                 priority
                 sizes="(max-width: 1024px) 100vw, 40vw"
                 unoptimized
-                className="object-cover"
+                className="media-safe object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#1a0505]/25 via-transparent to-transparent" />
 

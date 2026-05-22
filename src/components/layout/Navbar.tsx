@@ -4,6 +4,8 @@ import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { Menu, X, ShoppingBag, ArrowUpRight, User, LogOut, LayoutDashboard } from "lucide-react";
 import AuthModal from "@/components/ui/AuthModal";
+import { Menu, X, ArrowUpRight, ShoppingBag, User, LogOut, LayoutDashboard } from "lucide-react";
+import AuthModal from "../ui/AuthModal";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browse";
 
@@ -95,6 +97,21 @@ const Navbar: React.FC = () => {
               : "border-white/30 bg-[#ffffff]/70 backdrop-blur-md px-5 py-3"].join(" ")}>
 
             {/* Logo */}
+      <header
+        className={[
+          "fixed top-0 left-0 right-0 z-50 transition-all duration-500",
+          scrolled ? "py-3" : "py-5",
+        ].join(" ")}
+      >
+        <div className="page-shell px-5 lg:px-8">
+          <div
+            className={[
+              "relative flex items-center justify-between rounded-full border transition-all duration-500",
+              scrolled
+                ? "border-white/40 bg-[#ffffff]/90 backdrop-blur-xl shadow-[0_8px_32px_-12px_rgba(120,20,20,0.25)] px-4 py-2"
+                : "border-white/30 bg-[#ffffff]/70 backdrop-blur-md px-5 py-3",
+            ].join(" ")}
+          >
             <a href="#beranda" className="flex items-center gap-2 pl-1">
               <div className="relative h-11 w-11 flex-shrink-0">
                 <div className="absolute inset-0 rounded-full bg-[#8B1A1A]/10 blur-sm" />
@@ -135,6 +152,15 @@ const Navbar: React.FC = () => {
                       className="hidden sm:flex h-10 w-10 items-center justify-center rounded-full bg-[#8B1A1A] text-white text-sm font-bold hover:bg-[#6B1212] transition">
                       {initials}
                     </button>
+                  {user ? (
+                    <>
+                      <div className="relative hidden sm:block" ref={dropdownRef}>
+                        <button
+                          onClick={() => setDropdownOpen((v) => !v)}
+                          className="flex h-10 w-10 items-center justify-center rounded-full bg-[#8B1A1A] text-white text-sm font-bold hover:bg-[#6B1212] transition"
+                        >
+                          {initials}
+                        </button>
 
                     {dropdownOpen && (
                       <div className="absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50">

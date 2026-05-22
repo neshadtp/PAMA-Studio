@@ -1,13 +1,14 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   Loader2, Plus, Search, RefreshCw, Trash2, KeyRound,
-  ChevronDown, Check, X, Edit3, UserCog, Shield, User,
+  Check, X, Edit3, UserCog, Shield, User,
   ChevronLeft, ChevronRight, UserPlus,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import ModalPortal from "@/components/ui/ModalPortal";
 
 const ROLE_COLOR: Record<string, string> = {
   admin: "bg-purple-100 text-purple-700",
@@ -49,6 +50,7 @@ function CreateUserModal({ isOpen, onClose, onSuccess }: { isOpen: boolean; onCl
   };
 
   return (
+    <ModalPortal>
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
       <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className="w-full max-w-md overflow-hidden rounded-[32px] bg-white shadow-2xl">
         <div className="bg-[#8B1A1A] p-6 text-white flex items-center justify-between">
@@ -92,6 +94,7 @@ function CreateUserModal({ isOpen, onClose, onSuccess }: { isOpen: boolean; onCl
         </form>
       </motion.div>
     </div>
+    </ModalPortal>
   );
 }
 
@@ -125,6 +128,7 @@ function EditUserModal({ user, isOpen, onClose, onSuccess }: { user: any; isOpen
   };
 
   return (
+    <ModalPortal>
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
       <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className="w-full max-w-md overflow-hidden rounded-[32px] bg-white shadow-2xl">
         <div className="bg-[#8B1A1A] p-6 text-white flex items-center justify-between">
@@ -164,6 +168,7 @@ function EditUserModal({ user, isOpen, onClose, onSuccess }: { user: any; isOpen
         </form>
       </motion.div>
     </div>
+    </ModalPortal>
   );
 }
 
@@ -185,6 +190,7 @@ function ResetPassModal({ user, isOpen, onClose }: { user: any; isOpen: boolean;
   };
 
   return (
+    <ModalPortal>
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
       <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className="w-full max-w-md overflow-hidden rounded-[32px] bg-white shadow-2xl">
         <div className="bg-[#8B1A1A] p-6 text-white flex items-center justify-between">
@@ -213,6 +219,7 @@ function ResetPassModal({ user, isOpen, onClose }: { user: any; isOpen: boolean;
         </div>
       </motion.div>
     </div>
+    </ModalPortal>
   );
 }
 
@@ -231,7 +238,7 @@ export default function UsersPage() {
   const [resetUser, setResetUser] = useState<any>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<any>(null);
 
-  const fetchUsers = async (p = 1) => {
+  const fetchUsers = useCallback(async (p = 1) => {
     setLoading(true);
     try {
       const params = new URLSearchParams({ page: String(p), limit: "15" });
@@ -247,7 +254,7 @@ export default function UsersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [search, roleFilter]);
 
   useEffect(() => {
     const checkAdmin = async () => {
@@ -261,14 +268,14 @@ export default function UsersPage() {
       } catch { router.push("/"); }
     };
     checkAdmin();
-  }, [router]);
+  }, [router, fetchUsers]);
 
   useEffect(() => {
     if (isAdmin) {
       const debounce = setTimeout(() => fetchUsers(1), 300);
       return () => clearTimeout(debounce);
     }
-  }, [search, roleFilter, isAdmin]);
+  }, [search, roleFilter, isAdmin, fetchUsers]);
 
   const handleDelete = async (userId: string) => {
     const res = await fetch(`/api/admin/users/${userId}`, { method: "DELETE" });
@@ -294,6 +301,7 @@ export default function UsersPage() {
       {editUser && <EditUserModal user={editUser} isOpen={!!editUser} onClose={() => setEditUser(null)} onSuccess={handleEditSuccess} />}
       {resetUser && <ResetPassModal user={resetUser} isOpen={!!resetUser} onClose={() => setResetUser(null)} />}
       {deleteConfirm && (
+        <ModalPortal>
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
           <motion.div initial={{ scale: 0.95 }} className="w-full max-w-sm overflow-hidden rounded-[32px] bg-white shadow-2xl p-6 space-y-4">
             <div className="flex items-center gap-3">
@@ -310,6 +318,7 @@ export default function UsersPage() {
             </div>
           </motion.div>
         </div>
+        </ModalPortal>
       )}
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

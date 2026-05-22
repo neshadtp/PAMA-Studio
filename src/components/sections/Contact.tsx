@@ -9,7 +9,7 @@ const Contact: React.FC = () => {
     <section id="kontak" className="relative bg-[#FBF7F1]">
       {/* Banner */}
       <div className="bg-[#8B1A1A] py-5">
-        <div className="mx-auto max-w-7xl px-5 lg:px-8">
+        <div className="page-shell px-5 lg:px-8">
           <h2
             className="text-center text-2xl text-white sm:text-3xl"
             style={{ fontFamily: "Fraunces, serif", fontWeight: 400 }}
@@ -19,7 +19,7 @@ const Contact: React.FC = () => {
         </div>
       </div>
 
-      <div className="mx-auto max-w-7xl px-5 py-16 lg:px-8 lg:py-24">
+      <div className="page-shell px-5 py-16 lg:px-8 lg:py-24">
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-12">
           {/* Left - Title + Map */}
           <div className="lg:col-span-7">

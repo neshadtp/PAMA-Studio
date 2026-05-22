@@ -113,6 +113,3 @@ function getDefaultImage(key: string): string {
   return images[key] || "/images/foto1.webp";
 }
 
-function formatIDR(n: number): string {
-  return "Rp " + new Intl.NumberFormat("id-ID").format(n);
-}

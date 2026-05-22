@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Inter_Tight, Fraunces } from "next/font/google";
 import "./globals.css";
-import ChatbotWidget from '../src/components/ChatbotWidget';
 import ChatbotGuard from '../src/components/ChatbotGuard';
 import { ToastProvider } from '@/contexts/ToastContext';
 

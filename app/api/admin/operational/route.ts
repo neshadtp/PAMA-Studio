@@ -14,6 +14,33 @@ export async function GET(request: NextRequest) {
   const limit = Math.min(50, Math.max(1, parseInt(url.searchParams.get("limit") ?? "20")));
   const offset = (page - 1) * limit;
 
+// Auto-update orders to 'done' if scheduled_at has passed
+const now = new Date().toISOString();
+await supabase
+  .from("orders")
+  .update({ status: "done" })
+  .eq("status", "scheduled")
+  .lt("scheduled_at", now);
+
+const todayOnly = url.searchParams.get("today") === "true";
+
+if (todayOnly) {
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const todayEnd = new Date();
+  todayEnd.setHours(23, 59, 59, 999);
+
+  const { data, error } = await supabase
+    .from("orders")
+    .select(`id, status, total_price_idr, created_at, scheduled_at, payment_method, profiles(full_name, email), packages(title)`)
+    .gte("scheduled_at", todayStart.toISOString())
+    .lte("scheduled_at", todayEnd.toISOString())
+    .order("scheduled_at", { ascending: true });
+
+  if (error) return NextResponse.json({ message: "Failed" }, { status: 500 });
+  return NextResponse.json({ orders: data || [] });
+}
+
 const { data, error, count } = await supabase
   .from("orders")
   .select(`
@@ -54,13 +81,18 @@ const { data, error, count } = await supabase
 }
 
 export async function PATCH(request: NextRequest) {
+  console.log("PATCH dipanggil"); // ← tambah
+  
   const check = await verifyAdmin();
   if (!check.success) {
     return NextResponse.json({ message: check.error!.message }, { status: check.error!.status });
   }
 
   const supabase = await createSupabaseServerClient();
-  const { orderId, status } = await request.json();
+  const body = await request.json();
+  console.log("Body:", body); // ← tambah
+  
+  const { orderId, status } = body;
 
   const VALID_STATUSES = ["pending", "awaiting_payment", "paid", "scheduled", "in_progress", "done", "cancelled"];
 
@@ -72,10 +104,13 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ message: `Invalid status. Allowed: ${VALID_STATUSES.join(", ")}` }, { status: 400 });
   }
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("orders")
     .update({ status })
-    .eq("id", orderId);
+    .eq("id", orderId)
+    .select(); // ← tambah select untuk lihat hasilnya
+
+  console.log("Update result:", data, "Error:", error); // ← tambah
 
   if (error) {
     return NextResponse.json({ message: "Failed to update order status" }, { status: 500 });
