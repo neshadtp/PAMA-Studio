@@ -46,9 +46,10 @@ type CalendarOrder = {
 };
 
 function toDateKey(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
+  const wib = new Date(date.getTime() + 7 * 60 * 60 * 1000);
+  const year = wib.getUTCFullYear();
+  const month = String(wib.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(wib.getUTCDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
 
@@ -202,7 +203,7 @@ function MiniCalendar() {
                   </span>
                 </div>
                 <div className="mt-2 flex items-center justify-between text-xs text-[#3a1a1a]/55">
-                  <span>{new Date(order.scheduled_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}</span>
+                  <span>{new Date(order.scheduled_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta" })}</span>
                   <span>{formatIDR(order.total_price_idr)}</span>
                 </div>
               </div>

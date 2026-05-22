@@ -93,9 +93,10 @@ function getStudioBadge(type: string, title: string): { label: string; color: st
 }
 
 function toDateKey(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
+  const wib = new Date(date.getTime() + 7 * 60 * 60 * 1000);
+  const year = wib.getUTCFullYear();
+  const month = String(wib.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(wib.getUTCDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
 
@@ -199,7 +200,7 @@ export default function CheckoutContent() {
     run();
   }, [packageId, isValidPackageId]);
 
-  const loadAvailability = useCallback(async (targetDate: string = date) => {
+  const loadAvailability = useCallback(async (targetDate: string) => {
     if (!packageId || !pkg) return;
 
     setErr("");
@@ -229,7 +230,7 @@ export default function CheckoutContent() {
     } finally {
       setLoadingTimes(false);
     }
-  }, [packageId, pkg, date]);
+  }, [packageId, pkg]);
 
   const loadDateOptions = useCallback(async () => {
     if (!packageId || !pkg || !needsSlot) return;
@@ -276,10 +277,6 @@ export default function CheckoutContent() {
         setIsAuthed(true);
         setUserData(data.user);
         setAuthOpen(false);
-        if ((pkg?.duration_minutes ?? 0) > 0) {
-          loadAvailability(date);
-          loadDateOptions();
-        }
       } else {
         setAuthOpen(true);
       }
@@ -305,10 +302,6 @@ export default function CheckoutContent() {
         setUserData(data.user);
         setSessionReady(true);
         setAuthOpen(false);
-
-        if ((pkg?.duration_minutes ?? 0) > 0) {
-          loadAvailability();
-        }
       } catch (error) {
         console.error("Checkout auth init error:", error);
         setIsAuthed(false);
@@ -319,7 +312,7 @@ export default function CheckoutContent() {
     };
 
     init();
-  }, [date, loadAvailability, loadDateOptions, pkg?.duration_minutes]);
+  }, []);
 
   useEffect(() => {
     if (pkg && needsSlot) loadAvailability(date);
