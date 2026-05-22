@@ -8,28 +8,34 @@ const CLOSE_MINUTE = 0;
 
 const BOOKED_STATUSES = ["pending", "awaiting_payment", "paid", "scheduled", "in_progress"];
 
-function getIntervalMinutes(type: string, title: string): number {
-  const t = title.toLowerCase();
-  if (t.includes("studio 1")) return 30;
-  return 60;
+// Penentuan interval total blokir ruangan murni dari metadata resource database Supabase
+function getRoomIntervalMinutes(resourceCode: string | undefined): number {
+  if (resourceCode === "studio1" || resourceCode === "pasfoto") {
+    return 30; // Pas Foto dan Studio 1 dapet blokir slot ruangan 30 menit
+  }
+  if (resourceCode === "studio2" || resourceCode === "studio2molding") {
+    return 60; // Studio 2 dan Molding dapet blokir slot ruangan 60 menit (1 jam)
+  }
+  return 30; // Fallback default ruangan standar
 }
 
-function generateAllSlots(durationMinutes: number, stepMinutes: number): string[] {
+// Generate slot ruangan utuh (30 atau 60 menit) agar tampilan jam rapi sesuai interval ruangan
+function generateAllSlots(roomIntervalMinutes: number): string[] {
   const slots: string[] = [];
   let current = OPEN_HOUR * 60 + OPEN_MINUTE;
   const closeTotal = CLOSE_HOUR * 60 + CLOSE_MINUTE;
 
-  while (current + durationMinutes <= closeTotal) {
+  while (current + roomIntervalMinutes <= closeTotal) {
     const startH = Math.floor(current / 60);
     const startM = current % 60;
-    const endMin = current + durationMinutes;
+    const endMin = current + roomIntervalMinutes;
     const endH = Math.floor(endMin / 60);
     const endM = endMin % 60;
 
     const label = `${String(startH).padStart(2, "0")}.${String(startM).padStart(2, "0")}-${String(endH).padStart(2, "0")}.${String(endM).padStart(2, "0")}`;
     slots.push(label);
 
-    current += stepMinutes;
+    current += roomIntervalMinutes; // Langkah interval sejalan dengan durasi ruangan
   }
 
   return slots;
@@ -55,9 +61,21 @@ export async function GET(req: NextRequest) {
 
     const supabase = await createSupabaseServerClient();
 
+    // Fetch data packages dengan inner join table package_resources & resources
     const { data: pkg, error: pkgErr } = await supabase
       .from("packages")
-      .select("id, type, title, duration_minutes")
+      .select(`
+        id, 
+        type, 
+        title, 
+        duration_minutes,
+        package_resources (
+          resources (
+            code,
+            name
+          )
+        )
+      `)
       .eq("id", packageId)
       .single();
 
@@ -65,17 +83,34 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ message: "Paket tidak ditemukan" }, { status: 404 });
     }
 
+    // Tangkap resource code database relasi record pertama
+    const packageResources = pkg.package_resources as any;
+    const resourceCode = packageResources?.[0]?.resources?.code;
+
+    // KONDISI KHUSUS FOTOGRAFER: Pengaturan kustomisasi jadwal admin tanpa slot reguler
+    if (resourceCode === "jasafotografer") {
+      return NextResponse.json({
+        slots: [],
+        available: [],
+        interval: 0,
+        requiresAdmin: true,
+        message: "Paket Jasa Fotografer memerlukan penyesuaian jadwal manual oleh Admin."
+      });
+    }
+
     const durationMinutes: number = pkg.duration_minutes ?? 0;
     if (durationMinutes <= 0) {
       return NextResponse.json({ slots: [] });
     }
 
-    const intervalMinutes = getIntervalMinutes(pkg.type ?? "", pkg.title ?? "");
-    const allSlots = generateAllSlots(durationMinutes, intervalMinutes);
+    // Ambil besaran interval ruangan (Pas Foto otomatis dapet 30 menit lewat fungsi di atas)
+    const roomInterval = getRoomIntervalMinutes(resourceCode);
+    const allSlots = generateAllSlots(roomInterval);
 
     const dayStart = new Date(`${date}T00:00:00+07:00`).toISOString();
     const dayEnd = new Date(`${date}T23:59:59.999+07:00`).toISOString();
 
+    // Mengambil orderan terbooking untuk validasi tabrakan jadwal
     const { data: bookedOrders, error: ordersErr } = await supabase
       .from("orders")
       .select("scheduled_at, package_id")
@@ -89,30 +124,42 @@ export async function GET(req: NextRequest) {
 
     const packageIds = [...new Set((bookedOrders ?? []).map((o: any) => o.package_id))];
 
-    const packageDurations: Record<string, number> = {};
+    const bookedPackageIntervals: Record<string, number> = {};
     if (packageIds.length > 0) {
-      const { data: pkgDurations } = await supabase
+      const { data: bPackages } = await supabase
         .from("packages")
-        .select("id, duration_minutes")
+        .select(`
+          id,
+          package_resources (
+            resources (
+              code
+            )
+          )
+        `)
         .in("id", packageIds);
 
-      for (const p of pkgDurations ?? []) {
-        packageDurations[p.id] = p.duration_minutes ?? 0;
+      for (const p of bPackages ?? []) {
+        const bResCode = (p.package_resources as any)?.[0]?.resources?.code;
+        bookedPackageIntervals[p.id] = getRoomIntervalMinutes(bResCode);
       }
     }
 
+    // Hitung range menit bentrokan sewa ruangan berdasarkan interval masing-masing paket terbooking
     const bookedRanges: { start: number; end: number }[] = [];
     for (const order of bookedOrders ?? []) {
       const scheduledAt = new Date(order.scheduled_at);
       const wibOffset = 7 * 60;
       const localMinutes = scheduledAt.getUTCHours() * 60 + scheduledAt.getUTCMinutes() + wibOffset;
-      const orderDuration = packageDurations[order.package_id] ?? durationMinutes;
+      
+      const orderRoomInterval = bookedPackageIntervals[order.package_id] ?? roomInterval;
+      
       bookedRanges.push({
         start: localMinutes % (24 * 60),
-        end: (localMinutes + orderDuration) % (24 * 60),
+        end: (localMinutes + orderRoomInterval) % (24 * 60),
       });
     }
 
+    // Cek ketersediaan slot satu per satu
     const slots = allSlots.map((slotLabel) => {
       const range = slotToMinutes(slotLabel);
       if (!range) return { time: slotLabel, available: false };
@@ -132,7 +179,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       slots,
       available,
-      interval: intervalMinutes,
+      interval: roomInterval,
+      requiresAdmin: false,
     });
   } catch (e: any) {
     return NextResponse.json({ message: e?.message ?? "Server error" }, { status: 500 });

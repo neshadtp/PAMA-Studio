@@ -18,6 +18,7 @@ import {
   Image as ImageIcon,
   Users,
   Timer,
+  AlertCircle,
 } from "lucide-react";
 
 import Navbar from "../../src/components/layout/Navbar";
@@ -84,12 +85,6 @@ function formatIDR(n: number) {
   return "Rp " + new Intl.NumberFormat("id-ID").format(n);
 }
 
-function getIntervalLabel(type: string, title: string): string {
-  const t = title.toLowerCase();
-  if (t.includes("studio 1")) return "30 menit";
-  return "60 menit";
-}
-
 function getStudioBadge(type: string, title: string): { label: string; color: string } {
   const t = title.toLowerCase();
   if (t.includes("studio 1")) return { label: "Self Photo Studio 1", color: "bg-amber-100 text-amber-700" };
@@ -129,7 +124,6 @@ function formatCategoryLabel(key: string): string {
 function getBgColorExtended(color: string) {
   const c = color.toLowerCase();
   
-  // 1. Cek warna spesifik / abstrak terlebih dahulu agar tidak tertukar
   if (c.includes("abstrak abu")) {
     return {
       swatch: "bg-gradient-to-b from-[#a6a6a6] via-[#7d7d7d] to-[#595959] border-[#666666] shadow-[inset_0_2px_4px_rgba(0,0,0,0.06)]",
@@ -171,7 +165,6 @@ function getBgColorExtended(color: string) {
     };
   }
 
-  // 2. Cek warna standar studio
   if (c.includes("putih")) {
     return {
       swatch: "bg-gradient-to-b from-white via-neutral-50 to-neutral-200 border-neutral-300 shadow-[inset_0_2px_4px_rgba(0,0,0,0.03)]",
@@ -242,7 +235,6 @@ function getBgColorExtended(color: string) {
     };
   }
 
-  // 3. Warna Khusus Pas Foto
   if (c.includes("merah")) {
     return {
       swatch: "bg-gradient-to-b from-[#ff4d4d] via-[#cc0000] to-[#990000] border-[#990000] shadow-[inset_0_2px_4px_rgba(0,0,0,0.08)]",
@@ -260,7 +252,6 @@ function getBgColorExtended(color: string) {
     };
   }
 
-  // Fallback default jika tidak ada kata kunci yang cocok
   return {
     swatch: "bg-gradient-to-b from-neutral-200 via-neutral-400 to-neutral-500 border-neutral-400 shadow-[inset_0_2px_4px_rgba(0,0,0,0.05)]",
     glow: "hover:shadow-xl hover:shadow-neutral-400/20 hover:border-neutral-400",
@@ -300,6 +291,27 @@ export default function CheckoutContent() {
   const [err, setErr] = useState("");
   const [selectedBg, setSelectedBg] = useState<string>("");
 
+  // ==================== METADATA SINKRONISASI LOGIKA INTERVAL (SUPABASE) ====================
+  const timingInfo = useMemo(() => {
+    if (!pkg?.package_resources || pkg.package_resources.length === 0) {
+      return { intervalLabel: "30 menit", requiresAdmin: false };
+    }
+
+    const resourceCode = pkg.package_resources[0].resources?.code;
+
+    if (resourceCode === "studio1" || resourceCode === "pasfoto") {
+      return { intervalLabel: "30 menit", requiresAdmin: false };
+    }
+    if (resourceCode === "studio2" || resourceCode === "studio2molding") {
+      return { intervalLabel: "60 menit (1 jam)", requiresAdmin: false };
+    }
+    if (resourceCode === "jasafotografer") {
+      return { intervalLabel: "Jadwal Admin", requiresAdmin: true };
+    }
+
+    return { intervalLabel: "30 menit", requiresAdmin: false };
+  }, [pkg]);
+
   const backgroundOptions = useMemo(() => {
     if (!pkg?.package_resources) return null;
     
@@ -325,9 +337,9 @@ export default function CheckoutContent() {
   }, [pkg]);
 
   const duration = pkg?.duration_minutes ?? 0;
-  const needsSlot = duration > 0;
+  // Jika paket memerlukan admin (Jasa Fotografer), kita buat needsSlot = false agar date-time picker tidak ter-render
+  const needsSlot = duration > 0 && !timingInfo.requiresAdmin;
 
-  // Memindahkan logika filter keluar dari JSX (Anti-Error Build)
   const filteredAddons = useMemo(() => {
     if (!pkg || addons.length === 0) return [];
     
@@ -410,7 +422,6 @@ export default function CheckoutContent() {
     run();
   }, [packageId, isValidPackageId]);
 
-  // Auto-reset pilihan addons jika user ganti kategori paket
   useEffect(() => {
     if (!pkg || addons.length === 0) return;
     
@@ -438,7 +449,7 @@ export default function CheckoutContent() {
   }, [pkg?.type, addons]);
 
   const loadAvailability = useCallback(async (targetDate: string) => {
-    if (!packageId || !pkg) return;
+    if (!packageId || !pkg || !needsSlot) return;
 
     setErr("");
     setLoadingTimes(true);
@@ -446,11 +457,6 @@ export default function CheckoutContent() {
     setTime("");
 
     try {
-      if ((pkg.duration_minutes ?? 0) <= 0) {
-        setAvailableSlots([]);
-        return;
-      }
-
       const res = await fetch(
         `/api/availability/by-package?packageId=${encodeURIComponent(packageId)}&date=${encodeURIComponent(targetDate)}`
       );
@@ -461,13 +467,13 @@ export default function CheckoutContent() {
         return;
       }
       setAvailableSlots((data.slots ?? data.available ?? []) as SlotInfo[]);
-      setIntervalInfo(data.interval ? `Interval ${data.interval} menit` : "");
+      setIntervalInfo(data.interval ? `Interval ${data.interval} menit` : `Interval ${timingInfo.intervalLabel}`);
     } catch {
       setErr("Gagal load jam tersedia");
     } finally {
       setLoadingTimes(false);
     }
-  }, [packageId, pkg]);
+  }, [packageId, pkg, needsSlot, timingInfo.intervalLabel]);
 
   const loadDateOptions = useCallback(async () => {
     if (!packageId || !pkg || !needsSlot) return;
@@ -594,9 +600,12 @@ export default function CheckoutContent() {
     try {
       const payload = {
         packageId,
-        date,
-        time,
-        notes: selectedBg ? `Background: ${selectedBg}` : "",
+        date: timingInfo.requiresAdmin ? toDateKey(new Date()) : date,
+        time: timingInfo.requiresAdmin ? "Jadwal Admin" : time,
+        notes: [
+          selectedBg ? `Background: ${selectedBg}` : "",
+          timingInfo.requiresAdmin ? "Kategori khusus Jasa Fotografer: Perlu Konsultasi Mandiri Tim Lapangan" : ""
+        ].filter(Boolean).join(" | "),
         addons: Object.entries(selectedAddons).map(([addonId, qty]) => ({ addonId, qty })),
       };
 
@@ -618,8 +627,8 @@ export default function CheckoutContent() {
         userEmail: userData?.email || "-",
         packageName: pkg.title,
         totalPrice: grandTotal,
-        date: date,
-        time: time || "Jadwal Admin",
+        date: timingInfo.requiresAdmin ? "Custom Jadwal" : date,
+        time: timingInfo.requiresAdmin ? "Konsultasi Admin" : time,
       });
       setIsModalOpen(true);
 
@@ -652,7 +661,6 @@ export default function CheckoutContent() {
   );
 
   const studioBadge = pkg ? getStudioBadge(pkg.type ?? "", pkg.title ?? "") : null;
-  const intervalLabel = pkg ? getIntervalLabel(pkg.type ?? "", pkg.title ?? "") : "";
 
   return (
     <div className="min-h-screen bg-[#FBF7F1] text-[#1a0505]">
@@ -675,7 +683,7 @@ export default function CheckoutContent() {
         <div className="pointer-events-none absolute -top-16 -right-16 h-[260px] w-[260px] rounded-full bg-[#8B1A1A]/8 blur-[120px] sm:-top-20 sm:-right-20 sm:h-[320px] sm:w-[320px] lg:h-[400px] lg:w-[400px]" />
         <div className="pointer-events-none absolute top-40 -left-14 h-[200px] w-[200px] rounded-full bg-[#D4A373]/12 blur-[100px] sm:-left-20 sm:h-[250px] sm:w-[250px] lg:h-[300px] lg:w-[300px]" />
 
-        <div className="page-shell max-w-6xl px-5 py-10 lg:py-16">
+        <div className="page-shell max-w-6xl px-5 py-10 mx-auto lg:py-16">
           <Link href="/paket" className="group mb-8 inline-flex items-center gap-2 rounded-full border border-[#8B1A1A]/20 bg-white/70 px-4 py-2 text-sm font-medium text-[#8B1A1A] backdrop-blur-sm transition hover:bg-white/90">
             <ChevronLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" />
             Kembali ke Paket
@@ -716,9 +724,10 @@ export default function CheckoutContent() {
                             {studioBadge.label}
                           </span>
                         )}
-                        {duration > 0 && (
+                        {/* FOTO 1 PERBAIKAN: Jika paket Jasa Fotografer, sembunyikan durasi teks sesi foto seluruhnya */}
+                        {!timingInfo.requiresAdmin && duration > 0 && (
                           <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-white">
-                            <Timer className="h-3 w-3" /> {duration} menit
+                            <Timer className="h-3 w-3" /> {duration} menit sesi foto
                           </span>
                         )}
                       </div>
@@ -761,7 +770,7 @@ export default function CheckoutContent() {
                   </div>
                 </div>
 
-                {/* Premium Background Options Picker (Sintaks Baru Anti-Error) */}
+                {/* Premium Background Options Picker */}
                 {backgroundOptions && (
                   <div className="overflow-hidden rounded-[32px] border border-[#8B1A1A]/10 bg-white shadow-[0_4px_20px_rgba(139,26,26,0.02)]">
                     <div className="border-b border-[#8B1A1A]/5 px-8 py-6">
@@ -799,7 +808,6 @@ export default function CheckoutContent() {
                                         : `border-neutral-100 bg-white hover:border-neutral-200 hover:-translate-y-1 ${styleInfo.glow}`
                                     }`}
                                   >
-                                    {/* Swatch Bulat Studio Effect */}
                                     <div className="relative mb-4 flex h-16 w-16 items-center justify-center">
                                       <div className={`h-full w-full rounded-2xl border shadow-inner transition-transform duration-500 ease-out group-hover:scale-105 ${styleInfo.swatch}`}>
                                         {styleInfo.extra}
@@ -813,7 +821,6 @@ export default function CheckoutContent() {
                                       {color}
                                     </span>
                                     
-                                    {/* Check Indicator Premium */}
                                     <div className={`absolute top-3 right-3 flex h-5 w-5 items-center justify-center rounded-full border transition-all duration-300 ${
                                       isSelected 
                                         ? "bg-[#8B1A1A] border-[#8B1A1A] scale-100 opacity-100 rotate-0" 
@@ -895,6 +902,22 @@ export default function CheckoutContent() {
 
               {/* Right Column - Booking Form */}
               <div className="lg:col-span-5 space-y-6">
+                
+                {/* Panel Alert Konsultasi Jasa Fotografer */}
+                {timingInfo.requiresAdmin && (
+                  <div className="rounded-[32px] border border-amber-200 bg-amber-50/70 p-6 space-y-3 shadow-sm backdrop-blur-sm">
+                    <div className="flex items-start gap-2.5 text-amber-800">
+                      <AlertCircle className="h-5 w-5 mt-0.5 shrink-0" />
+                      <div>
+                        <h4 className="font-bold text-sm">Alert Konsultasi Admin</h4>
+                        <p className="text-xs text-amber-700 mt-1 leading-relaxed">
+                          Penentuan jam untuk paket <strong>Jasa Fotografer</strong> wajib dikonsultasikan secara langsung via admin WhatsApp demi menjamin ketersediaan kru lapangan. Silakan selesaikan pengisian lembar konfirmasi terlebih dahulu.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Date & Time Picker */}
                 {needsSlot && (
                   <div className="overflow-hidden rounded-[32px] border border-[#8B1A1A]/10 bg-white shadow-sm">
@@ -902,7 +925,8 @@ export default function CheckoutContent() {
                       <h3 className="text-lg font-bold text-[#1a0505]" style={{ fontFamily: "Fraunces, serif" }}>
                         Pilih <span className="italic text-[#8B1A1A]">Jadwal</span>
                       </h3>
-                      <p className="text-xs text-[#3a1a1a]/50 mt-0.5">Jam operasional {intervalInfo} · 09.30 - 21.00</p>
+                      {/* FOTO 2 PERBAIKAN: Pas Foto otomatis menampilkan text '30 menit booking ruangannya' karena terikat room interval database */}
+                      <p className="text-xs text-[#3a1a1a]/50 mt-0.5">Jam operasional ({timingInfo.intervalLabel} booking ruangannya) · 09.30 - 21.00</p>
                     </div>
                     <div className="p-6 space-y-5">
                       <div>
@@ -963,8 +987,9 @@ export default function CheckoutContent() {
                       </div>
 
                       <div>
+                        {/* FOTO 2: Label penunjuk alokasi jam booking ruangannya */}
                         <label className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-[#8B1A1A]">
-                          <Clock4 className="h-3.5 w-3.5" /> Jam ({intervalLabel})
+                          <Clock4 className="h-3.5 w-3.5" /> Jam ({timingInfo.intervalLabel} booking ruangannya)
                         </label>
                         {loadingTimes ? (
                           <div className="flex items-center gap-3 py-4">
@@ -1045,6 +1070,8 @@ export default function CheckoutContent() {
                         <><Loader2 className="h-4 w-4 animate-spin" /> Memproses...</>
                       ) : !isAuthed ? (
                         <>Login untuk Booking</>
+                      ) : timingInfo.requiresAdmin ? (
+                        <><ShieldCheck className="h-4 w-4" /> Ambil Sesi & Hubungi Admin</>
                       ) : needsSlot && (!date || !time) ? (
                         <><Clock4 className="h-4 w-4" /> Pilih Jadwal Dulu</>
                       ) : backgroundOptions && !selectedBg ? (
