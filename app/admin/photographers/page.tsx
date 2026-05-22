@@ -159,7 +159,7 @@ export default function PhotographersPage() {
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="flex items-center gap-2 rounded-2xl border border-[#8B1A1A]/10 bg-white px-4">
           <User size={16} className="text-[#8B1A1A]/30" />
-          <select value={selectedResource} onChange={e => setSelectedResource(e.target.value)} className="py-3 text-sm outline-none bg-transparent flex-1">
+          <select value={selectedResource} onChange={e => setSelectedResource(e.target.value)} className="py-3 text-sm text-[#1a0505] outline-none bg-transparent flex-1">
             <option value="">Semua Resource</option>
             {resources.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
           </select>
