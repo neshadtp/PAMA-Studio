@@ -10,17 +10,10 @@ import {
   Monitor,
   LogOut,
   Bell,
-  Search,
-  Menu,
-  X,
-  Package,
-  Home,
-  FileText,
-  Settings,
-} from "lucide-react";
-import { useState, useEffect } from "react";
+  Search
+} from 'lucide-react';
+import { useState } from 'react';
 import Image from "next/image";
-import { useAuth } from "@/hooks/useAuth";
 
 const menuItems = [
   { name: "Dashboard", icon: LayoutDashboard, path: "/admin" },
@@ -65,36 +58,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const today = new Date().toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 
   return (
-    <div className="flex h-screen bg-[#FBF7F1] overflow-hidden">
-      {isSidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      <aside
-        className={`
-          fixed inset-y-0 left-0 z-50 w-72 bg-[#8B1A1A] text-white transform transition-transform duration-300 lg:relative lg:translate-x-0
-          ${isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
-        `}
-      >
-        <div className="flex flex-col h-full p-6">
-          <div className="flex items-center gap-3 mb-10">
-            <div className="relative h-11 w-11 flex-shrink-0 overflow-hidden rounded-xl bg-white/20">
-              <Image src="/logo.png" alt="Logo PAMA" fill className="object-contain p-1" />
-            </div>
-            <div>
-              <span className="font-bold text-xl tracking-wide" style={{ fontFamily: "Fraunces, serif" }}>PAMA</span>
-              <span className="text-xs text-red-200 block -mt-0.5">Studio Admin</span>
-            </div>
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="ml-auto lg:hidden p-2 rounded-full hover:bg-white/10"
-            >
-              <X size={20} />
-            </button>
-          </div>
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
+      {/* SIDEBAR MERAH */}
+      <aside className="w-64 bg-red-600 text-white flex flex-col shadow-lg flex-shrink-0 z-20">
+        {/* Logo Area */}
+      <div className="p-6 border-b border-red-700 flex items-center gap-3">
+        <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-xl bg-white">
+          <Image src="/logo.png" alt="Logo PAMA" fill className="object-contain p-1" />
+        </div>
+        <span className="font-bold text-xl tracking-wide">PAMA Studio</span>
+      </div>
 
           <nav className="flex-1 space-y-2">
             {menuItems.map((item) => {
@@ -184,24 +157,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             />
           </div>
 
-          <div className="flex items-center gap-3">
-            <a
-              href="/admin/notifications"
-              className="relative p-2 text-[#3a1a1a]/50 hover:bg-[#8B1A1A]/5 rounded-lg transition-colors"
-            >
-              <Bell size={20} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
-            </a>
-            {ready && (
-              <div className="flex items-center gap-2">
-                <div className="hidden sm:flex h-8 w-8 items-center justify-center rounded-full bg-[#8B1A1A] text-white text-xs font-bold">
-                  {userInitials}
-                </div>
-                <span className="text-sm font-medium text-[#1a0505] hidden md:block">
-                  {profile?.full_name ?? "Admin"}
-                </span>
-              </div>
-            )}
+          {/* Right Icons */}
+          <div className="flex items-center gap-4">
+          <a href="/admin/notifications" className="relative p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors">
+            <Bell size={20} />
+            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+          </a>
+            <div className="flex items-center gap-2">
+               <img 
+                src="https://ui-avatars.com/api/?name=Super+Admin&background=random" 
+                alt="Profile" 
+                className="w-8 h-8 rounded-full"
+              />
+              <span className="text-sm font-medium text-gray-700 hidden md:block">SuperAdminZ</span>
+            </div>
           </div>
         </header>
 

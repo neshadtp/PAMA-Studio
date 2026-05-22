@@ -15,25 +15,7 @@ import { useToast } from "@/contexts/ToastContext";
 
 type Mode = "login" | "register";
 
-interface AuthModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  title?: string;
-  subtitle?: string;
-  redirectType?: AuthRedirectType;
-  packageId?: string;
-  onAuthSuccess?: () => void;
-}
-
-export default function AuthModal({
-  isOpen,
-  onClose,
-  title,
-  subtitle,
-  redirectType = "landing",
-  packageId,
-  onAuthSuccess,
-}: AuthModalProps) {
+export default function AuthModal({ isOpen, onClose, title, subtitle }: { isOpen: boolean; onClose: () => void; title?: string; subtitle?: string }) {
   const router = useRouter();
   const { clearLoginIntent } = useAuthRedirect();
   const supabase = createSupabaseBrowserClient();
