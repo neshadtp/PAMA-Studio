@@ -18,7 +18,7 @@ import {
   FileText,
   Settings,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -39,6 +39,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { profile, logout, ready } = useAuth();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState("");
+  const mainRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const update = () => setCurrentTime(new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }));
@@ -46,6 +47,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const interval = setInterval(update, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    setSidebarOpen(false);
+    mainRef.current?.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [pathname]);
 
   const handleLogout = async () => {
     await logout();
@@ -79,7 +86,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           ${isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
         `}
       >
-        <div className="flex flex-col h-full p-6">
+        <div className="flex flex-col h-full p-6 overflow-hidden">
           <div className="flex items-center gap-3 mb-10">
             <div className="relative h-11 w-11 flex-shrink-0 overflow-hidden rounded-xl bg-white/20">
               <Image src="/logo.png" alt="Logo PAMA" fill className="object-contain p-1" />
@@ -96,7 +103,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </button>
           </div>
 
-          <nav className="flex-1 space-y-2">
+          <nav className="admin-sidebar-scrollbar flex-1 min-h-0 space-y-2 overflow-y-auto pr-2">
             {menuItems.map((item) => {
               const isActive = pathname === item.path;
               return (
@@ -205,7 +212,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </header>
 
-        <div className="flex-1 overflow-auto p-6 bg-[#FBF7F1]">{children}</div>
+        <div ref={mainRef} className="flex-1 overflow-auto p-6 bg-[#FBF7F1]">{children}</div>
       </main>
     </div>
   );
