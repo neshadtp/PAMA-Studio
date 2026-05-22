@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { Menu, X, ShoppingBag, ArrowUpRight, User, LogOut, LayoutDashboard } from "lucide-react";
+import { Menu, X, ArrowUpRight, ShoppingBag, User, LogOut, LayoutDashboard } from "lucide-react";
 import AuthModal from "../ui/AuthModal";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
@@ -131,13 +131,6 @@ const Navbar: React.FC = () => {
                 <>
                   {user ? (
                     <>
-                      <button
-                        onClick={() => router.push("/dashboard-client")}
-                        className="hidden sm:flex h-10 w-10 items-center justify-center rounded-full border border-[#8B1A1A]/20 bg-white/70 text-[#8B1A1A]"
-                      >
-                        <ShoppingBag className="h-4 w-4" />
-                      </button>
-
                       <div className="relative hidden sm:block" ref={dropdownRef}>
                         <button
                           onClick={() => setDropdownOpen((v) => !v)}

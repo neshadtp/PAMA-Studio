@@ -2,12 +2,10 @@
 
 import React from "react";
 import { CheckCircle2, MessageCircle, X, Calendar, Clock, Receipt, User } from "lucide-react";
-import { useRouter } from "next/navigation";
+
 import { buildWhatsAppLink } from "@/lib/whatsapp";
 
 export default function SuccessModal({ isOpen, data, onClose }: any) {
-  const router = useRouter();
-
   if (!isOpen || !data) return null;
 
   const handleWhatsApp = () => {

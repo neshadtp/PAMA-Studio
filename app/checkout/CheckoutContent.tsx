@@ -263,7 +263,7 @@ export default function CheckoutContent() {
     };
 
     init();
-  }, [loadAvailability]);
+  }, [loadAvailability, pkg?.duration_minutes]);
 
   useEffect(() => {
     if (pkg && needsSlot) loadAvailability();

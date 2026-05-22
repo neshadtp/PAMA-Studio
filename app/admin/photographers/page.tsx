@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   Loader2, Plus, RefreshCw, Trash2, X, Calendar, Clock, User,
 } from "lucide-react";
@@ -26,7 +26,7 @@ export default function PhotographersPage() {
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState("");
 
-  const fetchSlots = async () => {
+  const fetchSlots = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -40,7 +40,7 @@ export default function PhotographersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedResource, selectedDate]);
 
   useEffect(() => {
     const checkAdmin = async () => {
@@ -54,11 +54,11 @@ export default function PhotographersPage() {
       } catch { router.push("/"); }
     };
     checkAdmin();
-  }, [router]);
+  }, [router, fetchSlots]);
 
   useEffect(() => {
     if (isAdmin) fetchSlots();
-  }, [selectedResource, selectedDate, isAdmin]);
+  }, [selectedResource, selectedDate, isAdmin, fetchSlots]);
 
   const handleCreateSlot = async (e: React.FormEvent) => {
     e.preventDefault();

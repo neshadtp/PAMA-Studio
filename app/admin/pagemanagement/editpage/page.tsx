@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
 import { ArrowLeft, Upload, X, Eye } from "lucide-react";
 
 function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
@@ -18,7 +19,6 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
 function EditPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const pageId = searchParams.get("id");
   const pageTitle = searchParams.get("title") ?? "";
   const pageDesc = searchParams.get("description") ?? "";
 
@@ -98,7 +98,14 @@ function EditPageContent() {
           <label className="text-xs font-bold text-gray-800 uppercase tracking-widest block mb-2">Gambar</label>
           {image ? (
             <div className="relative">
-              <img src={image} alt="preview" className="w-full rounded-xl object-cover" style={{ maxHeight: 240 }} />
+              <Image
+                src={image}
+                alt="preview"
+                width={1200}
+                height={800}
+                className="w-full rounded-xl object-cover"
+                style={{ maxHeight: 240 }}
+              />
               <button
                 onClick={() => setImage(null)}
                 className="absolute top-3 right-3 w-8 h-8 bg-white rounded-full shadow flex items-center justify-center hover:bg-red-50 transition"

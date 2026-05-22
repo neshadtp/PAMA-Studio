@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Eye, ArrowLeft, Upload, X } from "lucide-react";
 
@@ -92,7 +93,14 @@ export default function AddNewPage() {
           <label className="text-xs font-bold text-gray-800 uppercase tracking-widest block mb-2">Gambar</label>
           {image ? (
             <div className="relative">
-              <img src={image} alt="preview" className="w-full rounded-xl object-cover" style={{ maxHeight: 240 }} />
+              <Image
+                src={image}
+                alt="preview"
+                width={1200}
+                height={800}
+                className="w-full rounded-xl object-cover"
+                style={{ maxHeight: 240 }}
+              />
               <button
                 onClick={() => setImage(null)}
                 className="absolute top-3 right-3 w-8 h-8 bg-white rounded-full shadow flex items-center justify-center hover:bg-red-50 transition"

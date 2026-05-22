@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   Loader2, Plus, Search, RefreshCw, Trash2, KeyRound,
-  ChevronDown, Check, X, Edit3, UserCog, Shield, User,
+  Check, X, Edit3, UserCog, Shield, User,
   ChevronLeft, ChevronRight, UserPlus,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -238,7 +238,7 @@ export default function UsersPage() {
   const [resetUser, setResetUser] = useState<any>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<any>(null);
 
-  const fetchUsers = async (p = 1) => {
+  const fetchUsers = useCallback(async (p = 1) => {
     setLoading(true);
     try {
       const params = new URLSearchParams({ page: String(p), limit: "15" });
@@ -254,7 +254,7 @@ export default function UsersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [search, roleFilter]);
 
   useEffect(() => {
     const checkAdmin = async () => {
@@ -268,14 +268,14 @@ export default function UsersPage() {
       } catch { router.push("/"); }
     };
     checkAdmin();
-  }, [router]);
+  }, [router, fetchUsers]);
 
   useEffect(() => {
     if (isAdmin) {
       const debounce = setTimeout(() => fetchUsers(1), 300);
       return () => clearTimeout(debounce);
     }
-  }, [search, roleFilter, isAdmin]);
+  }, [search, roleFilter, isAdmin, fetchUsers]);
 
   const handleDelete = async (userId: string) => {
     const res = await fetch(`/api/admin/users/${userId}`, { method: "DELETE" });

@@ -9,7 +9,6 @@ import {
   Clock,
   Camera,
   LogOut,
-  Bell,
   Search,
   Menu,
   X,
@@ -38,10 +37,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const { profile, logout, ready } = useAuth();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
+  const [today, setToday] = useState("");
   const [currentTime, setCurrentTime] = useState("");
   const mainRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    setToday(
+      new Date().toLocaleDateString("id-ID", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
+    );
+
     const update = () => setCurrentTime(new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }));
     update();
     const interval = setInterval(update, 1000);
@@ -68,8 +77,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         .join("")
         .toUpperCase()
     : "SA";
-
-  const today = new Date().toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 
   return (
     <div className="flex h-screen bg-[#FBF7F1] overflow-hidden">
@@ -192,13 +199,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
 
           <div className="flex items-center gap-3">
-            <a
-              href="/admin/notifications"
-              className="relative p-2 text-[#3a1a1a]/50 hover:bg-[#8B1A1A]/5 rounded-lg transition-colors"
-            >
-              <Bell size={20} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
-            </a>
             {ready && (
               <div className="flex items-center gap-2">
                 <div className="hidden sm:flex h-8 w-8 items-center justify-center rounded-full bg-[#8B1A1A] text-white text-xs font-bold">
