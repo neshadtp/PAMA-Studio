@@ -121,7 +121,7 @@ export default function PhotographersPage() {
             <label className="block text-xs font-bold uppercase tracking-wider text-[#8B1A1A] mb-1.5">Tanggal</label>
             <input type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} required min={new Date().toISOString().split("T")[0]} className="w-full rounded-xl border border-[#8B1A1A]/20 bg-[#FBF7F1] p-3 text-sm outline-none focus:border-[#8B1A1A]" />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-[#8B1A1A] mb-1.5">Mulai</label>
               <input type="time" value={form.start_time} onChange={e => setForm({ ...form, start_time: e.target.value })} required className="w-full rounded-xl border border-[#8B1A1A]/20 bg-[#FBF7F1] p-3 text-sm outline-none focus:border-[#8B1A1A]" />

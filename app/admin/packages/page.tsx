@@ -157,7 +157,7 @@ export default function MasterDataPackages() {
             {/* Kolom 2: Harga & Kapasitas */}
             <div className="space-y-4">
               <label className="flex items-center gap-2 font-semibold text-gray-700 border-b pb-2"><Users size={18}/> Harga & Kuota</label>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <span className="text-xs font-bold text-gray-400 uppercase">Harga Base</span>
                   <input type="number" value={formData.base_price_idr}
@@ -173,7 +173,7 @@ export default function MasterDataPackages() {
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <span className="text-xs font-bold text-gray-400 uppercase">Min Org</span>
                   <input type="number" value={formData.min_people}

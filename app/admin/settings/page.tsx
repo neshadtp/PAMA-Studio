@@ -255,7 +255,7 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Max Booking Per Hari</label>
                 <input value={maxBooking} onChange={e => setMaxBooking(e.target.value)}
@@ -344,7 +344,7 @@ export default function SettingsPage() {
               </div>
               <h2 className="font-bold text-gray-800">Tampilan</h2>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Theme</label>
                 <div className="flex gap-2">

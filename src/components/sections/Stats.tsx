@@ -97,7 +97,7 @@ const Stats: React.FC = () => {
         }}
       />
 
-      <div ref={ref} className="relative mx-auto max-w-7xl px-5 lg:px-8">
+      <div ref={ref} className="page-shell relative px-5 lg:px-8">
         <div className="grid grid-cols-2 gap-y-8 lg:grid-cols-4">
           {stats.map((s, i) => (
             <StatItem

@@ -95,7 +95,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       >
         <div className="flex flex-col h-full p-6 overflow-hidden">
           <div className="flex items-center gap-3 mb-10">
-            <div className="relative h-11 w-11 flex-shrink-0 overflow-hidden rounded-xl bg-white/20">
+            <div className="relative h-11 w-11 flex-shrink-0 overflow-hidden rounded-xl bg-white">
               <Image src="/logo.png" alt="Logo PAMA" fill className="object-contain p-1" />
             </div>
             <div>
@@ -212,7 +212,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </header>
 
-        <div ref={mainRef} className="flex-1 overflow-auto p-6 bg-[#FBF7F1]">{children}</div>
+        <div ref={mainRef} className="flex-1 overflow-auto p-4 bg-[#FBF7F1] sm:p-6">
+          <div className="mx-auto w-full max-w-[1600px]">{children}</div>
+        </div>
       </main>
     </div>
   );

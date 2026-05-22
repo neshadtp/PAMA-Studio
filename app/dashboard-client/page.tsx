@@ -54,7 +54,7 @@ Mohon instruksi selanjutnya.`;
           </div>
         </div>
         <div className="p-8 space-y-6" style={{ fontFamily: "Inter Tight, sans-serif" }}>
-          <div className="grid grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-widest text-[#8B1A1A]/60">Status</p>
               <div className="mt-1 flex items-center gap-2">

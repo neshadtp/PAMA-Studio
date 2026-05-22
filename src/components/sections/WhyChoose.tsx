@@ -34,7 +34,7 @@ const WhyChoose: React.FC = () => {
 
   return (
     <section className="relative bg-[#FBF7F1] py-16 lg:py-24">
-      <div className="mx-auto max-w-7xl px-5 lg:px-8">
+      <div className="page-shell px-5 lg:px-8">
         {/* Top row: image + text */}
         <div ref={sectionRef} className="grid grid-cols-1 items-center gap-10 lg:grid-cols-12">
           <div

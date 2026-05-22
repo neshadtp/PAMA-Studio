@@ -75,7 +75,7 @@ const Navbar: React.FC = () => {
           scrolled ? "py-3" : "py-5",
         ].join(" ")}
       >
-        <div className="mx-auto max-w-7xl px-5 lg:px-8">
+        <div className="page-shell px-5 lg:px-8">
           <div
             className={[
               "relative flex items-center justify-between rounded-full border transition-all duration-500",

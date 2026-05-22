@@ -30,7 +30,7 @@ export default function Portfolio() {
       ref={ref}
       className="relative bg-[#FBF7F1] py-16 lg:py-24"
     >
-      <div className="mx-auto max-w-7xl px-5 lg:px-8">
+      <div className="page-shell px-5 lg:px-8">
         <div className="flex flex-col items-center text-center">
           <span
             className="text-xs font-semibold uppercase tracking-[0.24em] text-[#8B1A1A]"
@@ -80,7 +80,7 @@ export default function Portfolio() {
                   fill
                   unoptimized
                   sizes="(max-width: 640px) 192px, 240px"
-                  className="object-cover transition duration-500 will-change-transform hover:scale-110"
+                  className="media-safe object-cover transition duration-500 will-change-transform hover:scale-110"
                 />
               </div>
             ))}
@@ -109,7 +109,7 @@ export default function Portfolio() {
                   fill
                   unoptimized
                   sizes="(max-width: 640px) 192px, 240px"
-                  className="object-cover transition duration-500 will-change-transform hover:scale-110"
+                  className="media-safe object-cover transition duration-500 will-change-transform hover:scale-110"
                 />
               </div>
             ))}

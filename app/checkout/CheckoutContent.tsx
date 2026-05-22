@@ -381,10 +381,10 @@ export default function CheckoutContent() {
       <Navbar />
 
       <div className="relative">
-        <div className="pointer-events-none absolute -top-20 -right-20 h-[400px] w-[400px] rounded-full bg-[#8B1A1A]/8 blur-[120px]" />
-        <div className="pointer-events-none absolute top-40 -left-20 h-[300px] w-[300px] rounded-full bg-[#D4A373]/12 blur-[100px]" />
+        <div className="pointer-events-none absolute -top-16 -right-16 h-[260px] w-[260px] rounded-full bg-[#8B1A1A]/8 blur-[120px] sm:-top-20 sm:-right-20 sm:h-[320px] sm:w-[320px] lg:h-[400px] lg:w-[400px]" />
+        <div className="pointer-events-none absolute top-40 -left-14 h-[200px] w-[200px] rounded-full bg-[#D4A373]/12 blur-[100px] sm:-left-20 sm:h-[250px] sm:w-[250px] lg:h-[300px] lg:w-[300px]" />
 
-        <div className="mx-auto max-w-6xl px-5 py-10 lg:py-16">
+        <div className="page-shell max-w-6xl px-5 py-10 lg:py-16">
           <Link href="/paket" className="group mb-8 inline-flex items-center gap-2 rounded-full border border-[#8B1A1A]/20 bg-white/70 px-4 py-2 text-sm font-medium text-[#8B1A1A] backdrop-blur-sm transition hover:bg-white/90">
             <ChevronLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" />
             Kembali ke Paket
@@ -417,7 +417,7 @@ export default function CheckoutContent() {
                 {/* Package Card */}
                 <div className="overflow-hidden rounded-[32px] border border-[#8B1A1A]/10 bg-white shadow-sm">
                   <div className="relative h-48 w-full bg-gradient-to-br from-[#8B1A1A] to-[#5C0E0E]">
-                    <Image src="/images/foto-pama.webp" alt={pkg.title} fill className="object-cover opacity-40 mix-blend-overlay" unoptimized />
+                    <Image src="/images/foto-pama.webp" alt={pkg.title} fill className="media-safe object-cover opacity-40 mix-blend-overlay" unoptimized />
                     <div className="absolute inset-0 flex flex-col justify-end p-6">
                       <div className="flex items-center gap-2 mb-2">
                         {studioBadge && (

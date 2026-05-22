@@ -449,7 +449,7 @@ export default function AutomationPage() {
             <p className="text-xs font-black uppercase tracking-widest text-white/70">Automation Stats</p>
             <p className="text-sm text-white/80">Statistik Hari Ini</p>
           </div>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div className="bg-white/20 rounded-xl p-4 text-center">
               <div className="text-2xl font-black">{stats.total}</div>
               <div className="text-xs text-white/60">Total</div>
@@ -487,32 +487,36 @@ export default function AutomationPage() {
           </div>
         ) : (
           <>
-            {/* Header */}
-            <div className="grid grid-cols-4 gap-4 px-4 py-2 text-white/60 text-xs font-bold uppercase tracking-wide mb-2">
-              <span>Waktu</span>
-              <span>Aktivitas Automation</span>
-              <span>Penyebab</span>
-              <span>Status</span>
-            </div>
-
-            {/* Scrollable rows */}
-            <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
-              {logs.map((log, i) => (
-                <div key={i} className="grid grid-cols-4 gap-4 bg-white/10 hover:bg-white/20 transition rounded-xl px-4 py-4 items-center">
-                  <span className="font-bold text-sm">{log.time}</span>
-                  <span className="text-sm">{log.activity}</span>
-                  <span className="text-sm text-white/80">{log.cause}</span>
-                  <span>
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                      log.status === "Gagal"
-                        ? "bg-red-500/40 text-red-200"
-                        : "bg-green-500/30 text-green-200"
-                    }`}>
-                      {log.status}
-                    </span>
-                  </span>
+            <div className="overflow-x-auto">
+              <div className="min-w-[720px]">
+                {/* Header */}
+                <div className="mb-2 grid grid-cols-4 gap-4 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white/60">
+                  <span>Waktu</span>
+                  <span>Aktivitas Automation</span>
+                  <span>Penyebab</span>
+                  <span>Status</span>
                 </div>
-              ))}
+
+                {/* Scrollable rows */}
+                <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
+                  {logs.map((log, i) => (
+                    <div key={i} className="grid grid-cols-4 gap-4 items-center rounded-xl bg-white/10 px-4 py-4 transition hover:bg-white/20">
+                      <span className="text-sm font-bold">{log.time}</span>
+                      <span className="text-sm">{log.activity}</span>
+                      <span className="text-sm text-white/80">{log.cause}</span>
+                      <span>
+                        <span className={`rounded-full px-3 py-1 text-xs font-bold ${
+                          log.status === "Gagal"
+                            ? "bg-red-500/40 text-red-200"
+                            : "bg-green-500/30 text-green-200"
+                        }`}>
+                          {log.status}
+                        </span>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </>
         )}
