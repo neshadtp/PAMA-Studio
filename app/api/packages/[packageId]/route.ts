@@ -10,7 +10,26 @@ export async function GET(
 
   const { data, error } = await supabase
     .from("packages")
-    .select("id,type,title,description,includes,duration_minutes,min_people,max_people,base_price_idr,is_active")
+    .select(`
+      id,
+      type,
+      title,
+      description,
+      includes,
+      duration_minutes,
+      min_people,
+      max_people,
+      base_price_idr,
+      is_active,
+      package_resources (
+        resources (
+          id,
+          code,
+          name,
+          background_options
+        )
+      )
+    `)
     .eq("id", packageId)
     .single();
 
