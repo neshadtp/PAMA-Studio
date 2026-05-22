@@ -4,7 +4,7 @@ import { Camera, Sparkles, Users, ArrowLeft, ChevronLeft, ChevronRight } from "l
 import Navbar from "../../src/components/layout/Navbar";
 import Footer from "../../src/components/layout/Footer";
 import PackageCard from "../../src/components/paket/PackageCard";
-import { createSupabaseServerClient } from "../../src/lib/supabase/supabase-server";
+import { createSupabaseServerClient } from "@/lib/supabase/supabase-server"
 import {  groupPackagesToCards } from "../../src/lib/packageCardAdapter";
 import { buildWhatsAppLink } from "../../src/lib/whatsapp";
 

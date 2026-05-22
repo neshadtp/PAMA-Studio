@@ -9,6 +9,10 @@ import {
   Clock,
   Camera,
   LogOut,
+  Bell,
+  Search
+} from 'lucide-react';
+import { useState } from 'react';
   Search,
   Menu,
   X,
@@ -19,13 +23,13 @@ import {
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { useAuth } from "@/hooks/useAuth";
 
 const menuItems = [
   { name: "Dashboard", icon: LayoutDashboard, path: "/admin" },
   { name: "Analytics", icon: BarChart3, path: "/admin/analytics" },
   { name: "Operational", icon: Users, path: "/admin/operational" },
   { name: "Automation", icon: Clock, path: "/admin/automation" },
+  { name: "Photographers", icon: Monitor, path: "/admin/photographers" },
   { name: "Photographers", icon: Camera, path: "/admin/photographers" },
   { name: "Packages", icon: Package, path: "/admin/packages" },
   { name: "Page Management", icon: FileText, path: "/admin/pagemanagement" },
@@ -79,6 +83,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     : "SA";
 
   return (
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
+      {/* SIDEBAR MERAH */}
+      <aside className="w-64 bg-red-600 text-white flex flex-col shadow-lg flex-shrink-0 z-20">
+        {/* Logo Area */}
+      <div className="p-6 border-b border-red-700 flex items-center gap-3">
+        <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-xl bg-white">
+          <Image src="/logo.png" alt="Logo PAMA" fill className="object-contain p-1" />
+        </div>
+        <span className="font-bold text-xl tracking-wide">PAMA Studio</span>
+      </div>
     <div className="flex h-screen bg-[#FBF7F1] overflow-hidden">
       {isSidebarOpen && (
         <div
@@ -198,6 +212,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             />
           </div>
 
+          {/* Right Icons */}
+          <div className="flex items-center gap-4">
+          <a href="/admin/notifications" className="relative p-2 text-gray-500 hover:bg-gray-100 rounded-full transition-colors">
+            <Bell size={20} />
+            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+          </a>
+            <div className="flex items-center gap-2">
+               <img 
+                src="https://ui-avatars.com/api/?name=Super+Admin&background=random" 
+                alt="Profile" 
+                className="w-8 h-8 rounded-full"
+              />
+              <span className="text-sm font-medium text-gray-700 hidden md:block">SuperAdminZ</span>
+            </div>
           <div className="flex items-center gap-3">
             {ready && (
               <div className="flex items-center gap-2">

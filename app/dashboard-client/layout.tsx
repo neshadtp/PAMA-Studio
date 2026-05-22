@@ -13,7 +13,6 @@ import {
   Home,
 } from "lucide-react";
 import Image from "next/image";
-import { useAuth } from "@/hooks/useAuth";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -58,23 +57,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         `}
       >
         <div className="h-full flex flex-col p-6">
-          <div className="flex items-center gap-3 mb-10">
-            <div className="relative h-11 w-11 flex-shrink-0 overflow-hidden rounded-xl">
-              <Image src="/logo.png" alt="Logo PAMA" fill className="object-contain" />
-            </div>
-            <div>
-              <span className="font-bold text-xl text-[#1a0505]" style={{ fontFamily: "Fraunces, serif" }}>
-                PAMA <span className="italic text-[#8B1A1A]">Studio</span>
-              </span>
-              <span className="text-[10px] text-[#3a1a1a]/50 block -mt-0.5 uppercase tracking-wider">Client Dashboard</span>
-            </div>
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="ml-auto lg:hidden p-2 rounded-full hover:bg-[#8B1A1A]/5 text-[#8B1A1A]"
-            >
-              <X size={20} />
-            </button>
+          {/* Logo */}
+        <div className="flex items-center gap-3 px-2 mb-10">
+          <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-xl">
+            <Image src="/logo.png" alt="Logo PAMA" fill className="object-contain" />
           </div>
+          <span className="font-serif text-xl text-[#1a0505] font-bold" style={{ fontFamily: "var(--font-fraunces)" }}>
+            PAMA <span className="italic text-[#8B1A1A]">Studio</span>
+          </span>
+        </div>
 
           <nav className="flex-1 space-y-2">
             {menuItems.map((item) => {
@@ -111,9 +102,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </Link>
             {ready && (
               <div className="flex items-center gap-3 mb-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#8B1A1A] text-white text-sm font-bold">
-                  {userInitials}
-                </div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#8B1A1A] text-white text-sm font-bold overflow-hidden">
+                {profile?.avatar_url ? (
+                  <img src={profile.avatar_url} alt="avatar" className="w-full h-full object-cover rounded-full" />
+                ) : (
+                  userInitials
+                )}
+              </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold truncate text-[#1a0505]">{profile?.full_name ?? "User"}</p>
                   <p className="text-xs text-[#8B1A1A]/60 capitalize">{profile?.role ?? "Client"}</p>

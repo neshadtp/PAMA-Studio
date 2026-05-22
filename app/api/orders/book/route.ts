@@ -196,14 +196,31 @@ export async function POST(request: Request) {
           })
           .eq("id", order.id);
 
-        if (updErr) throw new Error("Failed to update order total: " + updErr.message);
-      }
+      if (updErr) throw updErr;
 
-      return NextResponse.json({ 
-        ok: true, 
-        orderId: order.id, 
-        message: "Booking berhasil dibuat" 
-      });
+      // 8. Insert Booking — slot_id null karena sudah nullable
+      if (duration > 0 && resourceId) {
+        const timeStart = time.split("-")[0].replace(".", ":");
+        const startAt = new Date(`${date}T${timeStart}:00+07:00`);
+        if (isNaN(startAt.getTime())) throw new Error("Format tanggal/waktu tidak valid");
+
+        const endAt = addMinutes(startAt, duration);
+        const timeRange = `[${startAt.toISOString()},${endAt.toISOString()})`;
+
+        await supabase
+          .from("orders")
+          .update({ scheduled_at: startAt.toISOString() })
+          .eq("id", order.id);
+
+        const { error: bookErr } = await supabase.from("bookings").insert({
+          order_id: order.id,
+          time_range: timeRange,
+          // slot_id nullable, tidak dikirim
+        });
+
+        if (bookErr) throw new Error("Slot sudah terisi atau error sistem: " + bookErr.message);
+      }
+      return NextResponse.json({ ok: true, orderId: order.id });
 
     } catch (innerError: any) {
       // ROLLBACK: Hapus order jika proses addons/update gagal

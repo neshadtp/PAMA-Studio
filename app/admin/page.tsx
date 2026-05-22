@@ -1,13 +1,12 @@
 "use client";
 
+import React, { useEffect, useState } from "react";
+import { createSupabaseBrowserClient } from "@/lib/supabase/browse";
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  Users, ShoppingBag, Clock, CheckCircle,
+  Users, ShoppingBag, Clock, CheckCircle, TrendingUp,
   ArrowUpRight, Loader2, AlertCircle, ChevronLeft, ChevronRight,
-  ArrowRight,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
 
 function formatIDR(n: number) {
   return "Rp " + new Intl.NumberFormat("id-ID").format(n);
@@ -19,7 +18,7 @@ const STATUS_STYLE: Record<string, string> = {
   paid: "bg-green-100 text-green-700",
   scheduled: "bg-purple-100 text-purple-700",
   in_progress: "bg-cyan-100 text-cyan-700",
-  done: "bg-green-50 text-green-600",
+  done: "bg-gray-100 text-gray-600",
   cancelled: "bg-red-100 text-red-600",
 };
 
@@ -122,8 +121,23 @@ function MiniCalendar() {
   const selectedLabel = formatDateLabel(selectedDate);
 
   return (
-    <div className="bg-white rounded-3xl border border-[#8B1A1A]/10 p-6 shadow-sm">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
       <div className="flex items-center justify-between mb-4">
+        <button onClick={() => setCurrent(new Date(year, month - 1))} className="p-1 hover:bg-gray-100 rounded-full">
+          <ChevronLeft size={16} />
+        </button>
+        <span className="font-bold text-gray-800">{BULAN[month]} {year}</span>
+        <button onClick={() => setCurrent(new Date(year, month + 1))} className="p-1 hover:bg-gray-100 rounded-full">
+          <ChevronRight size={16} />
+        </button>
+      </div>
+      <div className="grid grid-cols-7 gap-1 text-center">
+        {HARI.map(h => <div key={h} className="text-[10px] font-bold text-gray-400 py-1">{h}</div>)}
+        {cells.map((d, i) => (
+          <div key={i} className={`text-xs py-1.5 rounded-full cursor-default
+            ${d === today.getDate() && month === today.getMonth() && year === today.getFullYear()
+              ? "bg-red-600 text-white font-bold" : d ? "text-gray-700 hover:bg-gray-100" : ""}`}>
+            {d ?? ""}
         <button onClick={() => setCurrent(new Date(year, month - 1, 1))} className="p-1.5 hover:bg-[#8B1A1A]/5 rounded-full transition-colors">
           <ChevronLeft size={16} className="text-[#3a1a1a]/60" />
         </button>
@@ -215,128 +229,90 @@ function MiniCalendar() {
   );
 }
 
-function StatCard({ label, value, icon, color }: { label: string; value: number; icon: React.ReactNode; color: string }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-3xl border border-[#8B1A1A]/10 p-6 shadow-sm hover:shadow-md hover:border-[#8B1A1A]/20 transition-all"
-    >
-      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 ${color}`}>
-        {icon}
-      </div>
-      <p className="text-xs font-bold uppercase tracking-widest text-[#3a1a1a]/40 mb-1">{label}</p>
-      <p className="text-3xl font-black text-[#1a0505] tracking-tight">{value}</p>
-    </motion.div>
-  );
-}
-
-type RecentOrder = {
-  id: string;
-  status: string;
-  total_price_idr: number;
-  created_at: string;
-  profiles: { full_name: string | null } | null;
-  packages: { title: string | null } | null;
-};
-
 export default function AdminPage() {
-  const router = useRouter();
+  const supabase = createSupabaseBrowserClient();
   const [loading, setLoading] = useState(true);
   const [adminName, setAdminName] = useState("Admin");
   const [stats, setStats] = useState({ totalUsers: 0, totalOrders: 0, pendingOrders: 0, doneOrders: 0 });
-  const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
-  const [packageStats, setPackageStats] = useState<{ id: string; title: string; count: number; total: number }[]>([]);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const [packageStats, setPackageStats] = useState<{ title: string; count: number; total: number }[]>([]);
 
   useEffect(() => {
-    const checkAdmin = async () => {
-      try {
-        const res = await fetch("/api/profile");
-        if (!res.ok) {
-          router.push("/");
-          return;
-        }
-        const data = await res.json();
-        if (data.profile?.role !== "admin") {
-          router.push("/");
-          return;
-        }
-        setIsAdmin(true);
-        setAdminName(data.profile?.full_name || "Admin");
-        fetchData();
-      } catch (error) {
-        console.error("Admin check error:", error);
-        router.push("/");
-      }
-    };
-
     const fetchData = async () => {
       setLoading(true);
-      try {
-        const [statsRes, ordersRes] = await Promise.all([
-          fetch("/api/admin/stats"),
-          fetch("/api/admin/orders"),
-        ]);
 
-        if (!statsRes.ok || !ordersRes.ok) {
-          console.error("Failed to fetch admin data");
-          return;
-        }
-
-        const statsData = await statsRes.json();
-        const ordersData = await ordersRes.json();
-
-        setStats(statsData.stats);
-        setPackageStats(statsData.packageStats);
-        setRecentOrders(ordersData.orders);
-      } catch (error) {
-        console.error("Fetch data error:", error);
-      } finally {
-        setLoading(false);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", user.id).single();
+        if (profile?.full_name) setAdminName(profile.full_name);
       }
+
+      const { count: userCount } = await supabase.from("profiles").select("id", { count: "exact", head: true });
+      const { data: allOrders } = await supabase.from("orders").select("id, status, total_price_idr, package_id");
+      const totalOrders = allOrders?.length ?? 0;
+      const pendingOrders = allOrders?.filter(o => ["pending","awaiting_payment"].includes(o.status)).length ?? 0;
+      const doneOrders = allOrders?.filter(o => o.status === "done").length ?? 0;
+      setStats({ totalUsers: userCount ?? 0, totalOrders, pendingOrders, doneOrders });
+
+      // Recent orders
+      const { data: recent } = await supabase
+        .from("orders")
+        .select("id, status, total_price_idr, created_at, scheduled_at, packages(title), profiles(full_name)")
+        .order("created_at", { ascending: false })
+        .limit(5);
+      setRecentOrders((recent as any[]) ?? []);
+
+      // Package stats
+      const { data: pkgs } = await supabase.from("packages").select("id, title");
+      if (pkgs && allOrders) {
+        const stats = pkgs.map(pkg => ({
+          title: pkg.title,
+          count: allOrders.filter(o => o.package_id === pkg.id).length,
+          total: totalOrders,
+        })).filter(p => p.count > 0).sort((a, b) => b.count - a.count).slice(0, 4);
+        setPackageStats(stats);
+      }
+
+      setLoading(false);
     };
-
-    checkAdmin();
-  }, [router]);
-
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen bg-[#FBF7F1] flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-[#8B1A1A]" />
-          <p className="text-[#3a1a1a]/60 font-medium">Memverifikasi akses admin...</p>
-        </div>
-      </div>
-    );
-  }
+    fetchData();
+  }, []);
 
   const todayStr = new Date().toLocaleDateString("id-ID", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
 
   if (loading) return (
     <div className="flex items-center justify-center h-64">
-      <Loader2 className="animate-spin text-[#8B1A1A]" size={32} />
+      <Loader2 className="animate-spin text-red-600" size={32} />
     </div>
   );
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#8B1A1A]">Dashboard</span>
-          <h1 className="text-2xl md:text-3xl font-serif text-[#1a0505] mt-1" style={{ fontFamily: "Fraunces, serif" }}>
-            Selamat datang, <span className="italic text-[#8B1A1A]">{adminName}</span>!
-          </h1>
-          <p className="text-sm text-[#3a1a1a]/50 mt-1">{todayStr}</p>
+          <p className="text-red-600 text-sm font-semibold">Dashboard</p>
+          <h1 className="text-2xl font-bold text-gray-800">Selamat datang, {adminName}!</h1>
         </div>
-        <a
-          href="/admin/operational"
-          className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-[#8B1A1A] text-white text-sm font-semibold rounded-full hover:bg-[#6B1212] transition-all"
-        >
-          Lihat Pesanan <ArrowRight size={16} />
-        </a>
+        <span className="text-sm text-gray-500">{todayStr}</span>
       </div>
 
+      {/* Stat Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[
+          { label: "User Aktif", value: stats.totalUsers, icon: <Users size={20} />, color: "text-red-500 bg-red-50" },
+          { label: "Total Booking", value: stats.totalOrders, icon: <ShoppingBag size={20} />, color: "text-red-500 bg-red-50" },
+          { label: "Pesanan Diproses", value: stats.pendingOrders, icon: <Clock size={20} />, color: "text-red-500 bg-red-50" },
+          { label: "Sesi Selesai", value: stats.doneOrders, icon: <CheckCircle size={20} />, color: "text-red-500 bg-red-50" },
+        ].map(card => (
+          <div key={card.label} className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${card.color}`}>
+              {card.icon}
+            </div>
+            <p className="text-sm text-gray-500 mb-1">{card.label}</p>
+            <p className="text-2xl font-bold text-gray-800">{card.value}</p>
+          </div>
+        ))}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 md:gap-6">
         <StatCard
           label="User Aktif"
@@ -364,45 +340,43 @@ export default function AdminPage() {
         />
       </div>
 
-
+      {/* Bottom Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white rounded-3xl border border-[#8B1A1A]/10 shadow-sm overflow-hidden">
-          <div className="flex items-center justify-between px-6 py-5 border-b border-[#8B1A1A]/10">
-            <div>
-              <h2 className="font-bold text-[#1a0505]">Aktivitas Terbaru</h2>
-              <p className="text-xs text-[#3a1a1a]/50 mt-0.5">Update pesanan terbaru</p>
-            </div>
-            <a href="/admin/operational" className="flex items-center gap-1 text-xs text-[#8B1A1A] font-semibold hover:opacity-70 transition-opacity">
+        
+        {/* Recent Activities */}
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+            <h2 className="font-bold text-gray-800">Aktivitas Terbaru</h2>
+            <a href="/admin/operational" className="text-xs text-red-600 font-semibold hover:underline flex items-center gap-1">
               Lihat Semua <ArrowUpRight size={12} />
             </a>
           </div>
 
           {recentOrders.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-[#3a1a1a]/30">
-              <AlertCircle size={32} className="mb-3" />
-              <p className="text-sm font-medium">Belum ada aktivitas</p>
-              <a href="/paket" className="mt-4 text-xs text-[#8B1A1A] font-semibold hover:underline">Lihat paket tersedia</a>
+            <div className="flex flex-col items-center justify-center py-12 text-gray-400">
+              <AlertCircle size={28} className="mb-2" />
+              <p className="text-sm">Belum ada aktivitas</p>
             </div>
           ) : (
-            <div className="divide-y divide-[#8B1A1A]/5">
+            <div className="divide-y divide-gray-50">
               {recentOrders.map((order) => (
-                <div key={order.id} className="flex items-center gap-4 px-6 py-4 hover:bg-[#FBF7F1]/50 transition-colors">
-                  <div className="w-10 h-10 rounded-2xl bg-[#8B1A1A]/10 flex items-center justify-center flex-shrink-0">
-                    <ShoppingBag size={18} className="text-[#8B1A1A]" />
+                <div key={order.id} className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition-colors">
+                  <div className="w-9 h-9 rounded-xl bg-red-50 flex items-center justify-center flex-shrink-0">
+                    <ShoppingBag size={16} className="text-red-500" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-[#1a0505] truncate">
-                      {order.profiles?.full_name ?? "Customer"} — {order.packages?.title ?? "-"}
+                    <p className="text-sm font-semibold text-gray-800 truncate">
+                      {(order.profiles as any)?.full_name ?? "Customer"} — {(order.packages as any)?.title ?? "-"}
                     </p>
-                    <p className="text-xs text-[#3a1a1a]/40 mt-0.5">
+                    <p className="text-xs text-gray-400">
                       {new Date(order.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
                     </p>
                   </div>
                   <div className="flex flex-col items-end gap-1">
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${STATUS_STYLE[order.status] ?? "bg-gray-100 text-gray-500"}`}>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${STATUS_STYLE[order.status] ?? "bg-gray-100 text-gray-500"}`}>
                       {STATUS_LABEL[order.status] ?? order.status}
                     </span>
-                    <span className="text-sm font-semibold text-[#1a0505]">{formatIDR(order.total_price_idr)}</span>
+                    <span className="text-xs font-semibold text-gray-700">{formatIDR(order.total_price_idr)}</span>
                   </div>
                 </div>
               ))}
@@ -410,35 +384,28 @@ export default function AdminPage() {
           )}
         </div>
 
+        {/* Right Column */}
         <div className="space-y-6">
+          {/* Calendar */}
           <MiniCalendar />
 
-          <div className="bg-white rounded-3xl border border-[#8B1A1A]/10 shadow-sm p-6">
-            <h2 className="font-bold text-[#1a0505] mb-4">Paket Populer</h2>
+          {/* Paket Populer */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <h2 className="font-bold text-gray-800 mb-4">Paket Populer</h2>
             {packageStats.length === 0 ? (
-              <div className="text-center py-6 text-[#3a1a1a]/40">
-                <p className="text-sm">Belum ada data</p>
-              </div>
+              <p className="text-sm text-gray-400">Belum ada data</p>
             ) : (
-              <div className="space-y-4">
-                {packageStats
-                .filter((p) => p.count > 0)
-                .slice(0, 4)
-                .map((pkg) => {
+              <div className="space-y-3">
+                {packageStats.map((pkg) => {
                   const pct = pkg.total > 0 ? Math.round((pkg.count / pkg.total) * 100) : 0;
                   return (
-                    <div key={pkg.id}>
-                      <div className="flex justify-between text-xs mb-1.5">
-                        <span className="font-medium text-[#1a0505] truncate">{pkg.title}</span>
-                        <span className="text-[#8B1A1A] font-bold ml-2">{pkg.count}x</span>
+                    <div key={pkg.title}>
+                      <div className="flex justify-between text-xs mb-1">
+                        <span className="font-medium text-gray-700 truncate">{pkg.title}</span>
+                        <span className="text-gray-400 ml-2">{pkg.count}x</span>
                       </div>
-                      <div className="h-3 bg-gray-100 rounded-full overflow-hidden">
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${Math.max(pct, pkg.count > 0 ? 8 : 0)}%` }}
-                          transition={{ duration: 0.8, ease: "easeOut" }}
-                          className="h-full bg-[#C0392B] rounded-full"
-                        />
+                      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-red-500 rounded-full transition-all" style={{ width: `${pct}%` }} />
                       </div>
                     </div>
                   );
