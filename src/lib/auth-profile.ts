@@ -7,6 +7,7 @@ export interface AuthProfile {
   email: string;
   role: "client" | "admin";
   phone?: string;
+  avatar_url?: string; 
 }
 
 interface RawProfileRow {
@@ -14,6 +15,7 @@ interface RawProfileRow {
   email: string | null;
   role: string | null;
   phone_whatsapp?: string | null;
+  avatar_url?: string | null;
 }
 
 export function normalizeProfile(profile: RawProfileRow | null | undefined): AuthProfile | null {
@@ -26,6 +28,7 @@ export function normalizeProfile(profile: RawProfileRow | null | undefined): Aut
     email: profile.email ?? "",
     role: profile.role === "admin" ? "admin" : "client",
     phone: profile.phone_whatsapp ?? undefined,
+    avatar_url: profile.avatar_url ?? undefined,
   };
 }
 
@@ -34,6 +37,7 @@ export function createFallbackProfile(user: User): AuthProfile {
     full_name: getFallbackName(user.user_metadata?.full_name, user.email),
     email: user.email ?? "",
     role: "client",
+    avatar_url: user.user_metadata?.avatar_url ?? undefined,
   };
 }
 
@@ -42,6 +46,7 @@ export function createFallbackProfileFromValues(email?: string, fullName?: strin
     full_name: getFallbackName(fullName, email),
     email: email ?? "",
     role: "client",
+    avatar_url: undefined,
   };
 }
 
@@ -51,7 +56,7 @@ export async function fetchProfileByUserId(
 ): Promise<AuthProfile | null> {
   const { data, error } = await supabase
     .from("profiles")
-    .select("full_name, email, role, phone_whatsapp")
+    .select("full_name, email, role, phone_whatsapp, avatar_url")
     .eq("id", userId)
     .maybeSingle();
 

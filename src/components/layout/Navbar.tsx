@@ -139,12 +139,16 @@ const Navbar: React.FC = () => {
                       </button>
 
                       <div className="relative hidden sm:block" ref={dropdownRef}>
-                        <button
-                          onClick={() => setDropdownOpen((v) => !v)}
-                          className="flex h-10 w-10 items-center justify-center rounded-full bg-[#8B1A1A] text-white text-sm font-bold hover:bg-[#6B1212] transition"
-                        >
-                          {initials}
-                        </button>
+                      <button
+                        onClick={() => setDropdownOpen((v) => !v)}
+                        className="flex h-10 w-10 items-center justify-center rounded-full bg-[#8B1A1A] text-white text-sm font-bold hover:bg-[#6B1212] transition overflow-hidden"
+                      >
+                        {profile?.avatar_url ? (
+                          <img src={profile.avatar_url} alt="avatar" className="w-full h-full object-cover rounded-full" />
+                        ) : (
+                          initials
+                        )}
+                      </button>
 
                         {dropdownOpen && (
                           <>

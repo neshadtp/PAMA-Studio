@@ -111,9 +111,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </Link>
             {ready && (
               <div className="flex items-center gap-3 mb-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#8B1A1A] text-white text-sm font-bold">
-                  {userInitials}
-                </div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#8B1A1A] text-white text-sm font-bold overflow-hidden">
+                {profile?.avatar_url ? (
+                  <img src={profile.avatar_url} alt="avatar" className="w-full h-full object-cover rounded-full" />
+                ) : (
+                  userInitials
+                )}
+              </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold truncate text-[#1a0505]">{profile?.full_name ?? "User"}</p>
                   <p className="text-xs text-[#8B1A1A]/60 capitalize">{profile?.role ?? "Client"}</p>

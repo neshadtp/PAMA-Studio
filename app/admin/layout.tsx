@@ -27,7 +27,7 @@ const menuItems = [
   { name: "Analytics", icon: BarChart3, path: "/admin/analytics" },
   { name: "Operational", icon: Users, path: "/admin/operational" },
   { name: "Automation", icon: Clock, path: "/admin/automation" },
-  { name: "Monitoring", icon: Monitor, path: "/admin/monitoring" },
+  { name: "Photographers", icon: Monitor, path: "/admin/photographers" },
   { name: "Packages", icon: Package, path: "/admin/packages" },
   { name: "Page Management", icon: FileText, path: "/admin/pagemanagement" },
   { name: "Settings", icon: Settings, path: "/admin/settings" },
