@@ -9,6 +9,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
+import ModalPortal from "@/components/ui/ModalPortal";
 
 const OrderDetailModal = ({ order, isOpen, onClose }: any) => {
   if (!isOpen || !order) return null;
@@ -25,6 +26,7 @@ Mohon instruksi selanjutnya.`;
   };
 
   return (
+    <ModalPortal>
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -94,6 +96,7 @@ Mohon instruksi selanjutnya.`;
         </div>
       </motion.div>
     </motion.div>
+    </ModalPortal>
   );
 };
 

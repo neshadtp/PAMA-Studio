@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import ModalPortal from "@/components/ui/ModalPortal";
 
 function CreateResourceModal({ isOpen, onClose, onSuccess }: { isOpen: boolean; onClose: () => void; onSuccess: () => void }) {
   const [form, setForm] = useState({ code: "", name: "" });
@@ -34,6 +35,7 @@ function CreateResourceModal({ isOpen, onClose, onSuccess }: { isOpen: boolean; 
   };
 
   return (
+    <ModalPortal>
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
       <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className="w-full max-w-md overflow-hidden rounded-[32px] bg-white shadow-2xl">
         <div className="bg-[#8B1A1A] p-6 text-white flex items-center justify-between">
@@ -60,6 +62,7 @@ function CreateResourceModal({ isOpen, onClose, onSuccess }: { isOpen: boolean; 
         </form>
       </motion.div>
     </div>
+    </ModalPortal>
   );
 }
 
@@ -93,6 +96,7 @@ function EditResourceModal({ resource, isOpen, onClose, onSuccess }: { resource:
   };
 
   return (
+    <ModalPortal>
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
       <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} className="w-full max-w-md overflow-hidden rounded-[32px] bg-white shadow-2xl">
         <div className="bg-[#8B1A1A] p-6 text-white flex items-center justify-between">
@@ -124,6 +128,7 @@ function EditResourceModal({ resource, isOpen, onClose, onSuccess }: { resource:
         </form>
       </motion.div>
     </div>
+    </ModalPortal>
   );
 }
 
@@ -187,6 +192,7 @@ export default function ResourcesPage() {
       {createOpen && <CreateResourceModal isOpen={createOpen} onClose={() => setCreateOpen(false)} onSuccess={handleCreateSuccess} />}
       {editResource && <EditResourceModal resource={editResource} isOpen={!!editResource} onClose={() => setEditResource(null)} onSuccess={handleEditSuccess} />}
       {deleteConfirm && (
+        <ModalPortal>
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
           <motion.div initial={{ scale: 0.95 }} className="w-full max-w-sm overflow-hidden rounded-[32px] bg-white shadow-2xl p-6 space-y-4">
             <div className="flex items-center gap-3">
@@ -203,6 +209,7 @@ export default function ResourcesPage() {
             </div>
           </motion.div>
         </div>
+        </ModalPortal>
       )}
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
