@@ -14,6 +14,14 @@ export async function GET(request: NextRequest) {
   const limit = Math.min(50, Math.max(1, parseInt(url.searchParams.get("limit") ?? "20")));
   const offset = (page - 1) * limit;
 
+// Auto-update orders to 'done' if scheduled_at has passed
+const now = new Date().toISOString();
+await supabase
+  .from("orders")
+  .update({ status: "done" })
+  .eq("status", "scheduled")
+  .lt("scheduled_at", now);
+
 const todayOnly = url.searchParams.get("today") === "true";
 
 if (todayOnly) {

@@ -230,7 +230,7 @@ const fetchData = async (page = 1) => {
 
   const todayStr = new Date().toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
   const todayBooking = todayOrders.length;
-  const inProgressCount = orders.filter(o => o.status === "done").length;
+  const inProgressCount = todayOrders.filter((o: any) => getAutoStatus(o) === "done").length;
 
   const exportCSV = () => {
     const rows = [["ID", "Customer", "Paket", "Status", "Jadwal", "Total"]];
