@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Users, ShoppingBag, Clock, CheckCircle,
   ArrowUpRight, Loader2, AlertCircle, ChevronLeft, ChevronRight,
@@ -36,35 +36,179 @@ const STATUS_LABEL: Record<string, string> = {
 const BULAN = ["Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
 const HARI = ["Min","Sen","Sel","Rab","Kam","Jum","Sab"];
 
+type CalendarOrder = {
+  id: string;
+  status: string;
+  scheduled_at: string;
+  total_price_idr: number;
+  profiles: { full_name: string | null } | null;
+  packages: { title: string | null } | null;
+};
+
+function toDateKey(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function formatDateLabel(dateKey: string) {
+  const date = new Date(`${dateKey}T00:00:00`);
+  return new Intl.DateTimeFormat("id-ID", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  }).format(date);
+}
+
 function MiniCalendar() {
-  const [current, setCurrent] = useState(new Date());
-  const today = new Date();
+  const [current, setCurrent] = useState(() => new Date());
+  const [loading, setLoading] = useState(true);
+  const [orders, setOrders] = useState<CalendarOrder[]>([]);
+  const [selectedDate, setSelectedDate] = useState(() => toDateKey(new Date()));
+
   const year = current.getFullYear();
   const month = current.getMonth();
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const cells = Array(firstDay).fill(null).concat(Array.from({ length: daysInMonth }, (_, i) => i + 1));
 
+  useEffect(() => {
+    let active = true;
+
+    const fetchCalendar = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/admin/calendar?year=${year}&month=${month + 1}`);
+        if (!res.ok) {
+          return;
+        }
+
+        const data = await res.json();
+        if (active) {
+          setOrders((data.orders ?? []) as CalendarOrder[]);
+        }
+      } catch (error) {
+        console.error("Calendar fetch error:", error);
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchCalendar();
+    return () => {
+      active = false;
+    };
+  }, [month, year]);
+
+  const ordersByDate = useMemo(() => {
+    const map = new Map<string, CalendarOrder[]>();
+
+    for (const order of orders) {
+      const dateKey = toDateKey(new Date(order.scheduled_at));
+      const currentOrders = map.get(dateKey) ?? [];
+      currentOrders.push(order);
+      map.set(dateKey, currentOrders);
+    }
+
+    return map;
+  }, [orders]);
+
+  const todayKey = toDateKey(new Date());
+  const selectedOrders = ordersByDate.get(selectedDate) ?? [];
+  const selectedLabel = formatDateLabel(selectedDate);
+
   return (
     <div className="bg-white rounded-3xl border border-[#8B1A1A]/10 p-6 shadow-sm">
       <div className="flex items-center justify-between mb-4">
-        <button onClick={() => setCurrent(new Date(year, month - 1))} className="p-1.5 hover:bg-[#8B1A1A]/5 rounded-full transition-colors">
+        <button onClick={() => setCurrent(new Date(year, month - 1, 1))} className="p-1.5 hover:bg-[#8B1A1A]/5 rounded-full transition-colors">
           <ChevronLeft size={16} className="text-[#3a1a1a]/60" />
         </button>
         <span className="font-bold text-[#1a0505]">{BULAN[month]} {year}</span>
-        <button onClick={() => setCurrent(new Date(year, month + 1))} className="p-1.5 hover:bg-[#8B1A1A]/5 rounded-full transition-colors">
+        <button onClick={() => setCurrent(new Date(year, month + 1, 1))} className="p-1.5 hover:bg-[#8B1A1A]/5 rounded-full transition-colors">
           <ChevronRight size={16} className="text-[#3a1a1a]/60" />
         </button>
       </div>
       <div className="grid grid-cols-7 gap-1 text-center">
-        {HARI.map(h => <div key={h} className="text-[10px] font-bold text-[#3a1a1a]/40 py-1">{h}</div>)}
-        {cells.map((d, i) => (
-          <div key={i} className={`text-xs py-1.5 rounded-full cursor-default transition-colors
-            ${d === today.getDate() && month === today.getMonth() && year === today.getFullYear()
-              ? "bg-[#8B1A1A] text-white font-bold" : d ? "text-[#3a1a1a]/70 hover:bg-[#8B1A1A]/5" : ""}`}>
-            {d ?? ""}
+        {HARI.map((day) => <div key={day} className="text-[10px] font-bold text-[#3a1a1a]/40 py-1">{day}</div>)}
+        {cells.map((d, i) => {
+          if (!d) {
+            return <div key={`empty-${i}`} className="h-20 rounded-2xl" />;
+          }
+
+          const dateKey = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+          const dayOrders = ordersByDate.get(dateKey) ?? [];
+          const isToday = dateKey === todayKey;
+          const isSelected = dateKey === selectedDate;
+
+          return (
+            <button
+              key={dateKey}
+              type="button"
+              onClick={() => setSelectedDate(dateKey)}
+              className={`relative flex h-20 flex-col items-start rounded-2xl border p-2 text-left transition-all ${
+                isSelected
+                  ? "border-[#8B1A1A] bg-[#8B1A1A] text-white shadow-lg shadow-[#8B1A1A]/15"
+                  : dayOrders.length > 0
+                    ? "border-[#8B1A1A]/15 bg-[#FBF7F1] text-[#1a0505] hover:border-[#8B1A1A]/30 hover:bg-[#8B1A1A]/5"
+                    : "border-[#8B1A1A]/10 bg-white text-[#3a1a1a]/70 hover:border-[#8B1A1A]/25 hover:bg-[#FBF7F1]"
+              }`}
+            >
+              <span className={`text-xs font-semibold ${isToday && !isSelected ? "text-[#8B1A1A]" : ""}`}>{d}</span>
+              <span className={`mt-0.5 text-[10px] ${isSelected ? "text-white/80" : "text-[#3a1a1a]/45"}`}>
+                {dayOrders.length > 0 ? `${dayOrders.length} order` : "Kosong"}
+              </span>
+              <div className="mt-auto w-full flex items-center justify-between gap-2">
+                <span className={`text-[10px] font-bold uppercase tracking-wide ${isSelected ? "text-white/70" : "text-[#3a1a1a]/35"}`}>
+                  {dayOrders.length > 0 ? "Tasks" : "Free"}
+                </span>
+                {dayOrders.length > 0 && (
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${isSelected ? "bg-white/15 text-white" : "bg-[#8B1A1A]/10 text-[#8B1A1A]"}`}>
+                    {dayOrders.length}
+                  </span>
+                )}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="mt-5 rounded-2xl bg-[#FBF7F1] p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#8B1A1A]">{selectedLabel}</p>
+            <p className="text-sm font-semibold text-[#1a0505]">{selectedOrders.length > 0 ? `${selectedOrders.length} order terjadwal` : "Tidak ada order pada tanggal ini"}</p>
           </div>
-        ))}
+          {loading && <Loader2 size={14} className="animate-spin text-[#8B1A1A]" />}
+        </div>
+
+        <div className="mt-4 space-y-3">
+          {selectedOrders.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-[#8B1A1A]/15 bg-white px-4 py-5 text-sm text-[#3a1a1a]/50">
+              Tanggal ini belum memiliki order.
+            </div>
+          ) : (
+            selectedOrders.slice(0, 4).map((order) => (
+              <div key={order.id} className="rounded-xl border border-[#8B1A1A]/10 bg-white px-4 py-3 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-[#1a0505]">{order.profiles?.full_name ?? "Customer"}</p>
+                    <p className="truncate text-xs text-[#3a1a1a]/50">{order.packages?.title ?? "Paket"}</p>
+                  </div>
+                  <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${STATUS_STYLE[order.status] ?? "bg-gray-100 text-gray-500"}`}>
+                    {STATUS_LABEL[order.status] ?? order.status}
+                  </span>
+                </div>
+                <div className="mt-2 flex items-center justify-between text-xs text-[#3a1a1a]/55">
+                  <span>{new Date(order.scheduled_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })}</span>
+                  <span>{formatIDR(order.total_price_idr)}</span>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );

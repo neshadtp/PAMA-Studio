@@ -50,6 +50,12 @@ type SlotInfo = {
   available: boolean;
 };
 
+type DateOption = {
+  date: string;
+  availableCount: number;
+  totalSlots: number;
+};
+
 type UserData = {
   email?: string;
   profile?: { full_name?: string | null };
@@ -86,6 +92,22 @@ function getStudioBadge(type: string, title: string): { label: string; color: st
   return { label: "Paket", color: "bg-gray-100 text-gray-700" };
 }
 
+function toDateKey(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function formatDateOption(dateKey: string) {
+  const date = new Date(`${dateKey}T00:00:00`);
+  return new Intl.DateTimeFormat("id-ID", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  }).format(date);
+}
+
 export default function CheckoutContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -105,15 +127,11 @@ export default function CheckoutContent() {
   const [loadingData, setLoadingData] = useState(true);
   const [intervalInfo, setIntervalInfo] = useState<string>("");
 
-  const [date, setDate] = useState<string>(() => {
-    const now = new Date();
-    const yyyy = now.getFullYear();
-    const mm = String(now.getMonth() + 1).padStart(2, "0");
-    const dd = String(now.getDate()).padStart(2, "0");
-    return `${yyyy}-${mm}-${dd}`;
-  });
+  const [date, setDate] = useState<string>(() => toDateKey(new Date()));
 
   const [availableSlots, setAvailableSlots] = useState<SlotInfo[]>([]);
+  const [dateOptions, setDateOptions] = useState<DateOption[]>([]);
+  const [dateOptionsLoading, setDateOptionsLoading] = useState(false);
   const [time, setTime] = useState<string>("");
   const [selectedAddons, setSelectedAddons] = useState<Record<string, number>>({});
   const [loadingTimes, setLoadingTimes] = useState(false);
@@ -181,7 +199,7 @@ export default function CheckoutContent() {
     run();
   }, [packageId, isValidPackageId]);
 
-  const loadAvailability = useCallback(async () => {
+  const loadAvailability = useCallback(async (targetDate: string = date) => {
     if (!packageId || !pkg) return;
 
     setErr("");
@@ -196,7 +214,7 @@ export default function CheckoutContent() {
       }
 
       const res = await fetch(
-        `/api/availability/by-package?packageId=${encodeURIComponent(packageId)}&date=${encodeURIComponent(date)}`
+        `/api/availability/by-package?packageId=${encodeURIComponent(packageId)}&date=${encodeURIComponent(targetDate)}`
       );
 
       const data = await res.json();
@@ -213,6 +231,43 @@ export default function CheckoutContent() {
     }
   }, [packageId, pkg, date]);
 
+  const loadDateOptions = useCallback(async () => {
+    if (!packageId || !pkg || !needsSlot) return;
+
+    setDateOptionsLoading(true);
+
+    try {
+      const base = new Date();
+      const dates = Array.from({ length: 14 }, (_, index) => {
+        const next = new Date(base);
+        next.setDate(base.getDate() + index);
+        return toDateKey(next);
+      });
+
+      const results = await Promise.all(dates.map(async (targetDate) => {
+        const res = await fetch(
+          `/api/availability/by-package?packageId=${encodeURIComponent(packageId)}&date=${encodeURIComponent(targetDate)}`
+        );
+
+        const data = await res.json();
+        const slots = (data.slots ?? data.available ?? []) as SlotInfo[];
+        const availableCount = slots.filter((slot) => slot.available).length;
+
+        return {
+          date: targetDate,
+          availableCount,
+          totalSlots: slots.length,
+        } satisfies DateOption;
+      }));
+
+      setDateOptions(results);
+    } catch (error) {
+      console.error("Date options load error:", error);
+    } finally {
+      setDateOptionsLoading(false);
+    }
+  }, [packageId, pkg, needsSlot]);
+
   const handleAuthSuccess = async () => {
     try {
       const res = await fetch("/api/profile");
@@ -222,7 +277,8 @@ export default function CheckoutContent() {
         setUserData(data.user);
         setAuthOpen(false);
         if ((pkg?.duration_minutes ?? 0) > 0) {
-          loadAvailability();
+          loadAvailability(date);
+          loadDateOptions();
         }
       } else {
         setAuthOpen(true);
@@ -263,11 +319,15 @@ export default function CheckoutContent() {
     };
 
     init();
-  }, [loadAvailability, pkg?.duration_minutes]);
+  }, [date, loadAvailability, loadDateOptions, pkg?.duration_minutes]);
 
   useEffect(() => {
-    if (pkg && needsSlot) loadAvailability();
+    if (pkg && needsSlot) loadAvailability(date);
   }, [pkg, needsSlot, date, loadAvailability]);
+
+  useEffect(() => {
+    if (pkg && needsSlot) loadDateOptions();
+  }, [pkg, needsSlot, loadDateOptions]);
 
   useEffect(() => {
     if (packageId && !isValidPackageId) {
@@ -544,16 +604,60 @@ export default function CheckoutContent() {
                     </div>
                     <div className="p-6 space-y-5">
                       <div>
-                        <label className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-[#8B1A1A]">
-                          <CalendarDays className="h-3.5 w-3.5" /> Tanggal
-                        </label>
-                        <input
-                          type="date"
-                          value={date}
-                          onChange={(e) => setDate(e.target.value)}
-                          min={new Date().toISOString().split("T")[0]}
-                          className="w-full rounded-2xl border border-[#8B1A1A]/20 bg-[#FBF7F1] px-4 py-3.5 text-sm font-medium text-[#1a0505] outline-none focus:border-[#8B1A1A] focus:ring-2 focus:ring-[#8B1A1A]/10 transition-all"
-                        />
+                        <div className="mb-2 flex items-center justify-between gap-3">
+                          <label className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-[#8B1A1A]">
+                            <CalendarDays className="h-3.5 w-3.5" /> Tanggal
+                          </label>
+                          <span className="text-[11px] font-medium text-[#3a1a1a]/45">14 hari ke depan</span>
+                        </div>
+
+                        {dateOptionsLoading ? (
+                          <div className="flex items-center gap-3 rounded-2xl border border-[#8B1A1A]/10 bg-[#FBF7F1] px-4 py-5 text-sm text-[#3a1a1a]/60">
+                            <Loader2 className="h-4 w-4 animate-spin text-[#8B1A1A]" />
+                            Memuat tanggal tersedia...
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                            {dateOptions.map((option) => {
+                              const isSelected = date === option.date;
+                              const isAvailable = option.availableCount > 0;
+
+                              return (
+                                <button
+                                  key={option.date}
+                                  type="button"
+                                  onClick={() => {
+                                    if (!isAvailable) return;
+                                    setDate(option.date);
+                                  }}
+                                  disabled={!isAvailable}
+                                  className={`relative rounded-2xl border p-3 text-left transition-all ${
+                                    isSelected
+                                      ? "border-[#8B1A1A] bg-[#8B1A1A] text-white shadow-lg shadow-[#8B1A1A]/20"
+                                      : isAvailable
+                                        ? "border-[#8B1A1A]/15 bg-white text-[#1a0505] hover:border-[#8B1A1A]/35 hover:bg-[#FBF7F1]"
+                                        : "cursor-not-allowed border-[#8B1A1A]/5 bg-[#FBF7F1] text-[#3a1a1a]/35 opacity-70"
+                                  }`}
+                                >
+                                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em]">
+                                    {formatDateOption(option.date)}
+                                  </p>
+                                  <p className={`mt-1 text-lg font-black ${isSelected ? "text-white" : ""}`}>
+                                    {option.date.slice(8, 10)}
+                                  </p>
+                                  <div className="mt-2 flex items-center justify-between gap-2 text-[10px] font-bold uppercase tracking-wider">
+                                    <span className={isSelected ? "text-white/70" : "text-[#3a1a1a]/45"}>
+                                      {isAvailable ? `${option.availableCount} slot` : "Penuh"}
+                                    </span>
+                                    <span className={`rounded-full px-2 py-0.5 ${isSelected ? "bg-white/15 text-white" : isAvailable ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-500"}`}>
+                                      {isAvailable ? "Tersedia" : "Tutup"}
+                                    </span>
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
                       </div>
 
                       <div>
@@ -580,12 +684,14 @@ export default function CheckoutContent() {
                                     ? "border-[#8B1A1A] bg-[#8B1A1A] text-white shadow-lg shadow-[#8B1A1A]/20"
                                     : slot.available
                                     ? "border-[#8B1A1A]/20 bg-white text-[#1a0505] hover:border-[#8B1A1A]/50 hover:bg-[#FBF7F1]"
-                                    : "border-[#8B1A1A]/5 bg-[#FBF7F1]/50 text-[#3a1a1a]/30 cursor-not-allowed line-through",
+                                    : "border-[#8B1A1A]/5 bg-[#FBF7F1]/50 text-[#3a1a1a]/30 cursor-not-allowed",
                                 ].join(" ")}
                               >
-                                {slot.time.replace("-", " - ")}
-                                {slot.available && time !== slot.time && (
-                                  <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-green-500" />
+                                <span>{slot.time.replace("-", " - ")}</span>
+                                {slot.available ? (
+                                  time !== slot.time && <span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-green-500" />
+                                ) : (
+                                  <span className="absolute right-2 top-2 rounded-full bg-[#8B1A1A]/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[#8B1A1A]/40">Penuh</span>
                                 )}
                               </button>
                             ))}
